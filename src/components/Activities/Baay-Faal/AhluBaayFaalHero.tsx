@@ -36,9 +36,9 @@ const AhluBaayFaalHero = () => {
 
         {/* CTA Button */}
         <div className="mt-6">
-          <Link href="#join">
+          <Link href="#who-are-baayfaal">
             <button className="px-6 py-3 bg-yellow-500 text-black font-semibold rounded-lg shadow-md hover:bg-yellow-400 transition">
-              Join the Movement
+              Learn more
             </button>
           </Link>
         </div>

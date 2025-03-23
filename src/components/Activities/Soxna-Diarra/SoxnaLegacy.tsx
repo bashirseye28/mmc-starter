@@ -96,7 +96,7 @@ const SoxnaLegacy = () => {
 
         {/* ✅ CTA - Read More About Mame Diarra Bousso */}
         <div className="text-center mt-12">
-          <Link href="/about/mame-diarra-bousso">
+          <Link href="http://khassidaenpdf.free.fr/khassida_pdf/OeuvreSoxnaDiarra.pdf">
             <motion.button 
               className="px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary-dark transition shadow-md"
               whileHover={{ scale: 1.05, boxShadow: "0px 8px 16px rgba(0, 118, 118, 0.3)" }}

@@ -65,7 +65,7 @@ const WhyJoinBaayFaal = () => {
 
         {/* ✅ Call-to-Action Button */}
         <div className="mt-10">
-          <Link href="/join">
+          <Link href="/volunteer">
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}

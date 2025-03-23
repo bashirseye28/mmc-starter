@@ -16,7 +16,7 @@ const WhoAreBaayFaal = () => {
           transition={{ duration: 1 }}
         >
           <Image
-            src="/images/baay-faal.png"
+            src="/images/maam-seex.png"
             alt="Baay Faal History"
             layout="fill"
             objectFit="cover"
