@@ -21,7 +21,7 @@ const SoxnaAbout = () => {
             <span className="text-primary">as Murid Women</span>
           </h2>
           <p className="text-lg text-darkText font-body mt-3 max-w-2xl mx-auto">
-            Daahira Soxna Diarra is a faith-driven women's group focused on 
+            Daahira Soxna Diarra is a faith-driven women&#39;s group focused on 
             <span className="text-primary font-semibold"> spiritual growth, education, and community service</span>. 
             We empower women to strengthen their faith, support those in need, and build 
             a brighter future for the next generation.
@@ -70,6 +70,7 @@ const SoxnaAbout = () => {
           viewport={{ once: true }}
           transition={{ duration: 1, delay: 0.5 }}
         >
+          
           "When you educate a woman, you educate a generation."
         </motion.div>
 
