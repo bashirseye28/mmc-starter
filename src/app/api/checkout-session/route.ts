@@ -1,31 +1,30 @@
-import { NextApiRequest, NextApiResponse } from "next";
+// File: src/app/api/checkout-session/route.ts
+
+import { NextRequest } from "next/server";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: "2025-02-24.acacia", // ✅ Ensure you use the correct Stripe API version
+  apiVersion: "2025-02-24.acacia",
 });
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method Not Allowed" });
-  }
-
+export async function POST(request: NextRequest) {
   try {
-    const { amount, frequency, method } = req.body;
+    const body = await request.json();
+    const { amount, frequency, method } = body;
 
     if (!amount || !method) {
-      return res.status(400).json({ error: "Missing required parameters" });
+      return new Response(JSON.stringify({ error: "Missing required parameters" }), {
+        status: 400,
+      });
     }
 
-    // ✅ Mapping Stripe payment methods
     const paymentMethodMapping: Record<string, Stripe.Checkout.SessionCreateParams.PaymentMethodType[]> = {
       creditCard: ["card"],
       googlePay: ["card"],
       applePay: ["card"],
-      paypal: ["paypal"],
+      paypal: ["paypal"], // note: PayPal support may require special handling
     };
 
-    // ✅ Convert frequency to Stripe-recognized intervals
     const intervalMapping: Record<string, "day" | "week" | "month" | "year"> = {
       daily: "day",
       weekly: "week",
@@ -35,18 +34,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const recurringInterval = intervalMapping[frequency] || undefined;
 
-    // ✅ Creating a Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: paymentMethodMapping[method] || ["card"], // ✅ Use only supported methods
+      payment_method_types: paymentMethodMapping[method] || ["card"],
       mode: frequency === "one-time" ? "payment" : "subscription",
       line_items: [
         {
           price_data: {
-            currency: "gbp", // ✅ Ensure GBP is used
+            currency: "gbp",
             product_data: {
               name: `Donation (${frequency})`,
             },
-            unit_amount: Number(amount) * 100, // ✅ Convert to pence
+            unit_amount: Number(amount) * 100,
             recurring: recurringInterval ? { interval: recurringInterval } : undefined,
           },
           quantity: 1,
@@ -56,9 +54,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/donate`,
     });
 
-    res.status(200).json({ url: session.url });
+    return new Response(JSON.stringify({ url: session.url }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (error: any) {
     console.error("Stripe error:", error);
-    res.status(500).json({ error: error.message || "Failed to create Stripe session" });
+    return new Response(JSON.stringify({ error: error.message || "Failed to create Stripe session" }), {
+      status: 500,
+    });
   }
 }
