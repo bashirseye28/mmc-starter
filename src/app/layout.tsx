@@ -6,7 +6,7 @@ import "slick-carousel/slick/slick-theme.css";
 import Navbar from "@/components/Navbar/Navbar";
 import Footer from "@/components/Footer/Footer";
 import TopHeader from "@/components/Navbar/TopHeader";
-import { CartProvider } from "@/context/CartContext"; // ✅ Optimized Placement
+import { CartProvider } from "@/context/CartContext";
 
 // ✅ Optimized Font Loading
 const inter = Inter({
@@ -24,21 +24,16 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={inter.className}>
       <head>
         <link rel="icon" href="/images/logo.png" sizes="any" />
       </head>
-      <body className={`${inter.className} bg-lightBg text-darkText`}>
-        {/* ✅ Keep Header & Navbar outside CartProvider */}
+      <body className="bg-lightBg text-darkText">
         <TopHeader />
         <Navbar />
-
-        {/* ✅ Wrap only `main` content in CartProvider */}
         <CartProvider>
           <main className="min-h-screen">{children}</main>
         </CartProvider>
-
-        {/* ✅ Footer stays outside to avoid re-renders */}
         <Footer />
       </body>
     </html>
