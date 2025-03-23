@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMapMarkerAlt, faEnvelope } from "@fortawesome/free-solid-svg-icons";
+import { faMapMarkerAlt, faHeart, faEnvelope } from "@fortawesome/free-solid-svg-icons";
 import { faWhatsapp, faFacebookF, faInstagram, faYoutube, faTiktok } from "@fortawesome/free-brands-svg-icons";
 
 const TopHeader = () => {
@@ -38,7 +38,7 @@ const TopHeader = () => {
             <span className="bg-gold text-white px-2 py-1 rounded-md text-xs font-bold mr-2">
               INFO
             </span>
-            <span>Help Build KST – 97,000 Raised of 450,000 Goal</span>
+            <span>Help Build KST – 96,000 Raised of 350,000 Goal</span>
           </div>
         </div>
 
@@ -71,7 +71,8 @@ const TopHeader = () => {
           {/* Donate Button */}
           <Link href="/donate">
             <button className="bg-gold text-black font-semibold px-4 py-2 rounded-lg shadow hover:bg-yellow-500 transition">
-              Donate Now
+              <FontAwesomeIcon icon={faHeart} />
+               Donate Now
             </button>
           </Link>
         </div>

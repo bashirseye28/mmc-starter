@@ -11,7 +11,7 @@ const KstHero = () => {
       ctaText="Learn About KST"
       ctaLink="#about"
       ctaSecondaryText="Support the Project"
-      ctaSecondaryLink="#jaayante"
+      ctaSecondaryLink="#donation-tiers"
       ctaPrimaryIcon={<Users className="w-5 h-5" />}
       ctaSecondaryIcon={<Heart className="w-5 h-5" />}
     />

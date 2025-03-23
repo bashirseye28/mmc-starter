@@ -74,7 +74,7 @@ const MadrassahEnroll = () => {
 
         {/* 🏆 CTA Button */}
         <div className="text-center mt-12">
-          <Link href="#registration-form">
+          <Link href="#register">
             <button className="px-8 py-4 text-white font-semibold bg-primary rounded-lg shadow-md hover:bg-[#005e5e] transition text-lg">
               Register Now
             </button>

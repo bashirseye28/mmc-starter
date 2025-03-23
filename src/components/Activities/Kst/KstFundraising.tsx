@@ -111,7 +111,7 @@ const KstFundraising = () => {
             </motion.button>
           </Link>
 
-          <Link href="/sponsor-brick">
+          {/* <Link href="/sponsor-brick">
             <motion.button 
               className="px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary-dark transition shadow-lg flex items-center gap-2"
               whileHover={{ scale: 1.05, boxShadow: "0px 8px 16px rgba(0, 118, 118, 0.3)" }}
@@ -119,7 +119,7 @@ const KstFundraising = () => {
             >
               Sponsor a Brick
             </motion.button>
-          </Link>
+          </Link> */}
         </div>
 
       </div>
