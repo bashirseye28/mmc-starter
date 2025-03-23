@@ -2,17 +2,18 @@
 const nextConfig = {
   images: {
     domains: [
-      "firebasestorage.googleapis.com",
-      "drive.google.com",
-      "lh3.googleusercontent.com",
-      "www.google.com",
+      "firebasestorage.googleapis.com", // Firebase Storage
+      "drive.google.com", // Google Drive direct links
+      "lh3.googleusercontent.com", // Google Drive thumbnails
+      "www.google.com", // External images
     ],
-    unoptimized: true,
+    unoptimized: true, // Allows local images in /public without Next.js optimization
   },
-  reactStrictMode: true,
+  reactStrictMode: true, // Ensures best practices in React
   experimental: {
-    scrollRestoration: true,
+    optimizeCss: true, // Improves CSS performance
+    scrollRestoration: true, // Enhances page navigation
   },
 };
 
-module.exports = nextConfig;
+export default nextConfig;
