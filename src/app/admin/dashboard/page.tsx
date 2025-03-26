@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/app/lib/firebase";
-import { signOut, onAuthStateChanged } from "firebase/auth";
+import { signOut, onAuthStateChanged, User } from "firebase/auth";
 import { collection, getDocs } from "firebase/firestore";
 import Link from "next/link";
 import {
@@ -19,11 +19,23 @@ import {
   FaEnvelopeOpenText,
 } from "react-icons/fa";
 
+// ✅ Replace with your admin UID from Firebase Auth
+const ADMIN_UID = "RBLgsx5ef6Uebrl4k1So3i2uQKX2";
+
+interface DashboardStats {
+  orders: number;
+  products: number;
+  libraryBooks: number;
+  events: number;
+  volunteers: number;
+  messages: number;
+}
+
 const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<DashboardStats>({
     orders: 0,
     products: 0,
     libraryBooks: 0,
@@ -34,22 +46,26 @@ const AdminDashboard = () => {
 
   const router = useRouter();
 
-  // ✅ Auth check
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (!currentUser) {
         router.push("/admin/login");
+      } else if (currentUser.uid !== ADMIN_UID) {
+        alert("Access denied. Not an admin.");
+        router.push("/");
       } else {
         setUser(currentUser);
       }
       setLoading(false);
     });
+
     return () => unsubscribe();
   }, [router]);
 
-  // ✅ Fetch dashboard stats
   useEffect(() => {
-    const fetchData = async () => {
+    if (!user) return;
+
+    const fetchStats = async () => {
       try {
         const [ordersSnap, productsSnap, booksSnap, eventsSnap, volunteersSnap, messagesSnap] =
           await Promise.all([
@@ -70,12 +86,12 @@ const AdminDashboard = () => {
           messages: messagesSnap.size,
         });
       } catch (error) {
-        console.error("Error loading dashboard data:", error);
+        console.error("Failed to load dashboard stats:", error);
       }
     };
 
-    fetchData();
-  }, []);
+    fetchStats();
+  }, [user]);
 
   const handleLogout = async () => {
     try {
@@ -96,7 +112,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-lightBg">
-      {/* ✅ Sidebar */}
+      {/* Sidebar */}
       <aside
         className={`bg-white shadow-lg md:h-full md:relative z-50 ${
           isSidebarOpen ? "w-64" : "w-20"
@@ -116,10 +132,10 @@ const AdminDashboard = () => {
 
         <nav className="mt-6 space-y-3">
           <SidebarLink href="/admin/dashboard" icon={<FaHome />} label="Dashboard" isOpen={isSidebarOpen} />
-          <SidebarLink href="/admin/library" icon={<FaBook />} label="Manage Library" isOpen={isSidebarOpen} />
-          <SidebarLink href="/admin/shop" icon={<FaBox />} label="Manage Shop" isOpen={isSidebarOpen} />
-          <SidebarLink href="/admin/events" icon={<FaCalendarAlt />} label="Manage Events" isOpen={isSidebarOpen} />
-          <SidebarLink href="/admin/orders" icon={<FaShoppingCart />} label="Manage Orders" isOpen={isSidebarOpen} />
+          <SidebarLink href="/admin/library" icon={<FaBook />} label="Library" isOpen={isSidebarOpen} />
+          <SidebarLink href="/admin/shop" icon={<FaBox />} label="Shop" isOpen={isSidebarOpen} />
+          <SidebarLink href="/admin/events" icon={<FaCalendarAlt />} label="Events" isOpen={isSidebarOpen} />
+          <SidebarLink href="/admin/orders" icon={<FaShoppingCart />} label="Orders" isOpen={isSidebarOpen} />
           <SidebarLink href="/admin/volunteers" icon={<FaHandsHelping />} label="Volunteers" isOpen={isSidebarOpen} />
           <SidebarLink href="/admin/messages" icon={<FaEnvelopeOpenText />} label="Messages" isOpen={isSidebarOpen} />
 
@@ -133,7 +149,7 @@ const AdminDashboard = () => {
         </nav>
       </aside>
 
-      {/* ✅ Main Content */}
+      {/* Main Content */}
       <main
         className={`flex-1 p-6 mt-20 md:mt-0 transition-all duration-300 ${
           isSidebarOpen ? "md:ml-64" : "md:ml-20"
@@ -150,7 +166,6 @@ const AdminDashboard = () => {
           <FaChartLine /> Welcome, <span>{user?.displayName || user?.email}</span>
         </h1>
 
-        {/* ✅ Responsive Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
           <StatCard icon={<FaShoppingCart />} label="Orders" value={stats.orders} color="bg-primary" />
           <StatCard icon={<FaBox />} label="Products" value={stats.products} color="bg-gold" />
@@ -166,7 +181,7 @@ const AdminDashboard = () => {
 
 export default AdminDashboard;
 
-// ✅ Sidebar Link Component
+// ✅ SidebarLink component
 const SidebarLink = ({
   href,
   icon,
@@ -178,13 +193,16 @@ const SidebarLink = ({
   label: string;
   isOpen: boolean;
 }) => (
-  <Link href={href} className="group flex items-center gap-3 px-6 py-3 text-gray-700 hover:text-primary transition">
+  <Link
+    href={href}
+    className="group flex items-center gap-3 px-6 py-3 text-gray-700 hover:text-primary transition"
+  >
     {icon}
     {isOpen && <span>{label}</span>}
   </Link>
 );
 
-// ✅ StatCard Component
+// ✅ StatCard component
 const StatCard = ({
   icon,
   label,
@@ -196,10 +214,10 @@ const StatCard = ({
   value: number;
   color: string;
 }) => (
-  <div className={`rounded-xl shadow-md p-5 text-white flex flex-col sm:flex-row items-center sm:justify-between gap-3 ${color}`}>
-    <div className="text-4xl" aria-hidden="true">
-      {icon}
-    </div>
+  <div
+    className={`rounded-xl shadow-md p-5 text-white flex flex-col sm:flex-row items-center sm:justify-between gap-3 ${color}`}
+  >
+    <div className="text-4xl">{icon}</div>
     <div className="text-center sm:text-right w-full">
       <p className="text-xl font-bold truncate">{value}</p>
       <p className="text-sm truncate">{label}</p>

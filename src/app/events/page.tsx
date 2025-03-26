@@ -1,50 +1,56 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { db } from "@/app/lib/firebaseConfig"; // ✅ Correct Firestore Import
-import { collection, getDocs, QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
-import HeroEvents from "@/components/Events/EventsHero";
-import FilteredEvents from "@/components/Events/FilteredEvents";
+import { db } from "@/app/lib/firebaseConfig";
+import {
+  collection,
+  getDocs,
+  DocumentData,
+  QueryDocumentSnapshot,
+} from "firebase/firestore";
+
+// Components
+import EventsHero from "@/components/Events/EventsHero";
 import FeaturedEvent from "@/components/Events/FeaturedEvent";
-import EventsList from "@/components/Events/EventsList";
+import FilteredEvents from "@/components/Events/FilteredEvents";
 import EventCalendar from "@/components/Events/EventCalendar";
 
-// ✅ Define Event Type for TypeScript
-interface EventData {
-  id: string;
-  title: string;
-  date: string; // Format: YYYY-MM-DD
-  time: string;
-  location: string;
-  description: string;
-  imageUrl: string;
-  category: string; // Example: "Community", "Spiritual"
-}
+// Types
+import { Event } from "@/data/Event";
 
-export default function EventsPage() {
-  const [events, setEvents] = useState<EventData[]>([]);
+const EventsPage = () => {
+  const [allEvents, setAllEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, "events"));
+        const snapshot = await getDocs(collection(db, "events"));
+        const data: Event[] = snapshot.docs.map(
+          (doc: QueryDocumentSnapshot<DocumentData>) => {
+            const d = doc.data();
+            return {
+              id: doc.id,
+              title: d.title,
+              date: d.date,
+              time: d.time,
+              location: d.location,
+              description: d.description,
+              imageUrl: d.imageUrl,
+              rsvp: d.rsvp,
+              category: d.category,
+            };
+          }
+        );
 
-        // ✅ Corrected Mapping: Ensures `id` is included only once
-        const eventList: EventData[] = querySnapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => {
-          const data = doc.data() as Omit<EventData, "id">; // ✅ Exclude `id` from spread
-          return { id: doc.id, ...data }; // ✅ Include `id` separately
-        });
-
-        // ✅ Sort by date (Upcoming First)
-        const sortedEvents = eventList.sort(
+        const sorted = data.sort(
           (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
         );
 
-        setEvents(sortedEvents);
-      } catch (error) {
-        console.error("Error fetching events:", error);
+        setAllEvents(sorted);
+      } catch (err) {
+        console.error("❌ Error fetching events:", err);
         setError("Failed to load events.");
       } finally {
         setLoading(false);
@@ -55,24 +61,24 @@ export default function EventsPage() {
   }, []);
 
   return (
-    <main className="bg-lightBg min-h-screen py-10">
-      {/* ✅ Events Hero Section */}
-      <HeroEvents />
+    <main className="bg-lightBg min-h-screen">
+      <EventsHero />
 
-      {/* ✅ Loading & Error Handling */}
       {loading ? (
-        <p className="text-center text-primary text-lg">Loading events...</p>
+        <p className="text-center text-primary text-lg py-10">Loading events...</p>
       ) : error ? (
-        <p className="text-center text-red-600">{error}</p>
+        <p className="text-center text-red-600 py-10">{error}</p>
       ) : (
         <>
-          {/* ✅ Pass Firestore Events Data to Components */}
-          <FilteredEvents events={events} />
           <FeaturedEvent />
-          <EventsList events={events} />
-          <EventCalendar events={events} />
+          <div id="events">
+            <FilteredEvents events={allEvents} />
+            <EventCalendar />
+          </div>
         </>
       )}
     </main>
   );
-}
+};
+
+export default EventsPage;

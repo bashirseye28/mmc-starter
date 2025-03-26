@@ -67,3 +67,43 @@ html {
   color: #d4af37 !important; /* Darker Gold */
   font-size: 16px !important;
 }
+
+/* Custom FullCalendar button styles */
+.fc .fc-button {
+  background-color: white;
+  color: #374151; /* gray-700 */
+  border: 1px solid #D1D5DB; /* gray-300 */
+  border-radius: 0.5rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  text-transform: capitalize;
+  transition: all 0.2s ease;
+}
+
+.fc .fc-button:hover {
+  background-color: #f9fafb;
+}
+
+.fc .fc-button-primary {
+  background-color: #FACC15 !important; /* Gold */
+  color: black !important;
+  border: none;
+}
+
+.fc .fc-button-active {
+  background-color: #FACC15 !important;
+  color: black !important;
+  font-weight: 600;
+}
+
+/* Remove ugly focus outline */
+.fc .fc-button:focus {
+  box-shadow: none !important;
+}
+
+/* Calendar title */
+.fc-toolbar-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #1F2937; /* gray-800 */
+}
