@@ -29,6 +29,7 @@
     "cloudinary": "^2.6.0",
     "date-fns": "^4.1.0",
     "firebase": "^11.4.0",
+    "firebase-admin": "^13.2.0",
     "framer-motion": "^12.5.0",
     "jspdf": "^3.0.0",
     "lucide-react": "^0.479.0",

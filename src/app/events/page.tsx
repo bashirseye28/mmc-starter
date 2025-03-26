@@ -8,26 +8,25 @@ import {
   DocumentData,
   QueryDocumentSnapshot,
 } from "firebase/firestore";
+import { Event } from "@/data/Event";
 
-// Components
 import EventsHero from "@/components/Events/EventsHero";
 import FeaturedEvent from "@/components/Events/FeaturedEvent";
 import FilteredEvents from "@/components/Events/FilteredEvents";
-import EventCalendar from "@/components/Events/EventCalendar";
-
-// Types
-import { Event } from "@/data/Event";
+import EventsList from "@/components/Events/EventsList";
+import EventsCalendar from "@/components/Events/EventCalendar";
 
 const EventsPage = () => {
   const [allEvents, setAllEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         const snapshot = await getDocs(collection(db, "events"));
-        const data: Event[] = snapshot.docs.map(
+
+        const events: Event[] = snapshot.docs.map(
           (doc: QueryDocumentSnapshot<DocumentData>) => {
             const d = doc.data();
             return {
@@ -40,17 +39,21 @@ const EventsPage = () => {
               imageUrl: d.imageUrl,
               rsvp: d.rsvp,
               category: d.category,
+              featured: d.featured || false,
+              recurrence: d.recurrence || "none",
             };
           }
         );
 
-        const sorted = data.sort(
-          (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-        );
+        const now = new Date();
 
-        setAllEvents(sorted);
+        const upcoming = events
+          .filter((e) => new Date(e.date) >= now)
+          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        setAllEvents(upcoming);
       } catch (err) {
-        console.error("❌ Error fetching events:", err);
+        console.error("❌ Failed to fetch events:", err);
         setError("Failed to load events.");
       } finally {
         setLoading(false);
@@ -61,7 +64,7 @@ const EventsPage = () => {
   }, []);
 
   return (
-    <main className="bg-lightBg min-h-screen">
+    <main className="min-h-screen bg-white">
       <EventsHero />
 
       {loading ? (
@@ -70,11 +73,10 @@ const EventsPage = () => {
         <p className="text-center text-red-600 py-10">{error}</p>
       ) : (
         <>
-          <FeaturedEvent />
-          <div id="events">
-            <FilteredEvents events={allEvents} />
-            <EventCalendar />
-          </div>
+          <FeaturedEvent events={allEvents.filter((e) => e.featured)} />
+          <FilteredEvents events={allEvents} />
+          <EventsList events={allEvents} />
+          <EventsCalendar />
         </>
       )}
     </main>

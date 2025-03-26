@@ -11,7 +11,7 @@ import {
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import interactionPlugin from "@fullcalendar/interaction";
+import interactionPlugin from "@fullcalendar/interaction"; // ✅ Corrected import
 import { Event } from "@/data/Event";
 import { generateRecurringEvents } from "@/utils/generateRecurringEvents";
 import { CalendarDays, Clock, MapPin, X } from "lucide-react";
@@ -28,7 +28,6 @@ const EventsCalendar = () => {
     const fetchEvents = async () => {
       try {
         const snapshot = await getDocs(collection(db, "events"));
-
         let allEvents: Event[] = [];
 
         snapshot.docs.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
@@ -46,15 +45,14 @@ const EventsCalendar = () => {
             featured: d.featured,
             recurrence: d.recurrence || "none",
           };
-
           allEvents.push(...generateRecurringEvents(base));
         });
 
-        const sorted = allEvents
+        const upcoming = allEvents
           .filter((e) => new Date(e.date) >= new Date())
           .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-        setEvents(sorted);
+        setEvents(upcoming);
       } catch (error) {
         console.error("❌ Failed to fetch events for calendar:", error);
       }
@@ -93,18 +91,18 @@ const EventsCalendar = () => {
           eventClick={handleEventClick}
           height="auto"
           eventColor="#FACC15"
-          eventTextColor="#333"
+          eventTextColor="#1F2937"
         />
       </div>
 
-      {/* 🟨 Event Info Modal */}
+      {/* 🟨 Event Modal */}
       {selectedEvent && (
         <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
           <div className="bg-white max-w-lg w-full rounded-xl relative shadow-xl overflow-hidden">
-            {/* Close Button */}
             <button
               onClick={() => setSelectedEvent(null)}
               className="absolute top-4 right-4 text-gray-600 hover:text-red-500 text-xl"
+              aria-label="Close modal"
             >
               <X />
             </button>
@@ -124,7 +122,9 @@ const EventsCalendar = () => {
 
               <p className="text-gray-700 text-sm mb-2">
                 {selectedEvent.description || (
-                  <span className="italic text-gray-400">No description available</span>
+                  <span className="italic text-gray-400">
+                    No description available
+                  </span>
                 )}
               </p>
 
@@ -144,7 +144,10 @@ const EventsCalendar = () => {
               </div>
 
               <button
-                onClick={() => setShowForm(true)}
+                onClick={() => {
+                  setShowForm(true);
+                  setSelectedEvent(null);
+                }}
                 className="w-full bg-gold text-black font-semibold py-2 rounded-lg hover:bg-yellow-400 transition"
               >
                 Register Now
@@ -154,13 +157,14 @@ const EventsCalendar = () => {
         </div>
       )}
 
-      {/* 📝 Jotform Modal */}
+      {/* 📝 Registration Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
           <div className="bg-white max-w-3xl w-full rounded-xl shadow-xl relative p-6">
             <button
               className="absolute top-4 right-4 text-gray-600 hover:text-red-500"
               onClick={() => setShowForm(false)}
+              aria-label="Close registration"
             >
               <X />
             </button>

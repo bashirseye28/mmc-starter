@@ -1,63 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Event } from "@/data/Event";
-import { db } from "@/app/lib/firebaseConfig";
-import {
-  collection,
-  getDocs,
-  QueryDocumentSnapshot,
-  DocumentData,
-} from "firebase/firestore";
 import { FaCalendarAlt, FaMapMarkerAlt } from "react-icons/fa";
 
 const JOTFORM_URL = "https://form.jotform.com/243235413570046";
 
-const FeaturedEvent = () => {
-  const [featured, setFeatured] = useState<Event[]>([]);
+interface Props {
+  events: Event[];
+}
+
+const FeaturedEvent = ({ events }: Props) => {
   const [showModal, setShowModal] = useState(false);
   const [activeEvent, setActiveEvent] = useState<Event | null>(null);
-  const [error, setError] = useState("");
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const snapshot = await getDocs(collection(db, "events"));
+  const now = new Date();
 
-        const events: Event[] = snapshot.docs.map(
-          (doc: QueryDocumentSnapshot<DocumentData>) => {
-            const d = doc.data();
-            return {
-              id: doc.id,
-              title: d.title,
-              date: d.date,
-              time: d.time,
-              location: d.location,
-              description: d.description,
-              imageUrl: d.imageUrl,
-              rsvp: d.rsvp,
-              category: d.category,
-              featured: d.featured || false,
-            };
-          }
-        );
-
-        const now = new Date();
-
-        const featuredEvents = events
-          .filter((e) => e.featured && new Date(e.date) >= now)
-          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-          .slice(0, 3);
-
-        setFeatured(featuredEvents);
-      } catch (err) {
-        console.error("❌ Failed to fetch featured events:", err);
-        setError("Failed to load featured events.");
-      }
-    };
-
-    fetchEvents();
-  }, []);
+  const featured = events
+    .filter((e) => e.featured && new Date(e.date) >= now)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(0, 3);
 
   const handleRegister = (event: Event) => {
     setActiveEvent(event);
@@ -75,10 +37,6 @@ const FeaturedEvent = () => {
         <h2 className="text-3xl font-bold text-primary text-center mb-10">
           Featured <span className="text-gold">Events</span>
         </h2>
-
-        {error && (
-          <p className="text-center text-red-600 mb-6">{error}</p>
-        )}
 
         {featured.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -111,7 +69,9 @@ const FeaturedEvent = () => {
                   </p>
                   <p className="text-sm text-gray-700 line-clamp-3 mb-4">
                     {event.description || (
-                      <span className="italic text-gray-400">No description available</span>
+                      <span className="italic text-gray-400">
+                        No description available
+                      </span>
                     )}
                   </p>
 
@@ -132,7 +92,7 @@ const FeaturedEvent = () => {
         )}
       </div>
 
-      {/* JotForm Modal */}
+      {/* ✅ JotForm Modal */}
       {showModal && activeEvent && (
         <div
           role="dialog"
@@ -142,7 +102,8 @@ const FeaturedEvent = () => {
           <div className="bg-white max-w-3xl w-full rounded-xl relative shadow-lg overflow-hidden">
             <div className="flex justify-between items-center px-6 py-4 border-b">
               <h3 className="text-lg font-semibold text-primary">
-                Register for <span className="text-gold">{activeEvent.title}</span>
+                Register for{" "}
+                <span className="text-gold">{activeEvent.title}</span>
               </h3>
               <button
                 onClick={closeModal}
