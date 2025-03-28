@@ -1,51 +1,51 @@
 "use client";
 
 import { useState } from "react";
+
+// Components
 import ShopHero from "@/components/Shop/ShopHero";
-import CategoriesFilter from "@/components/Shop/ CategoryFilter"; // ✅ Fixed Import
+import CategoryFilter from "@/components/Shop/CategoryFilter"; // ✅ Fixed: no space in filename
 import ProductGrid from "@/components/Shop/ProductGrid";
-import FeaturedProducts from "@/components/Shop/FeaturedProducts"; // ✅ Import Featured Products
-import ShopBenefits from "@/components/Shop/ShopBenefits"; // ✅ Import Shop Benefits
-import CartSidebar from "@/components/Cart/CartSidebar"; // ✅ Import Cart Sidebar
+import FeaturedProducts from "@/components/Shop/FeaturedProducts";
+import ShopBenefits from "@/components/Shop/ShopBenefits";
+import CartSidebar from "@/components/Cart/CartSidebar";
 
 const ShopPage = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [isCartOpen, setIsCartOpen] = useState(false); // ✅ Cart Sidebar State
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // ✅ Function to handle category change
-  const handleCategorySelect = (category: string) => {
-    setSelectedCategory(category);
-  };
-
-  // ✅ Function to toggle cart sidebar
+  const handleCategorySelect = (category: string) => setSelectedCategory(category);
   const openCart = () => setIsCartOpen(true);
   const closeCart = () => setIsCartOpen(false);
 
   return (
-    <main className="min-h-screen">
-      {/* ✅ Hero Section */}
+    <main className="bg-lightBg min-h-screen">
+      {/* 🛍️ Hero */}
       <ShopHero />
 
-      {/* ✅ Category Filter */}
-      <section className="container mx-auto px-6 py-8">
-        <CategoriesFilter selectedCategory={selectedCategory} onCategorySelect={handleCategorySelect} />
+      {/* 🗂️ Category Filter */}
+      <section className="container mx-auto px-6 py-10">
+        <CategoryFilter
+          selectedCategory={selectedCategory}
+          onCategorySelect={handleCategorySelect}
+        />
       </section>
 
-      {/* ✅ Product Grid */}
-      <section className="container mx-auto px-6 py-8">
-        <ProductGrid category={selectedCategory} openCart={openCart} /> {/* ✅ Pass openCart function */}
+      {/* 🛒 Products */}
+      <section className="container mx-auto px-6 py-10" id="products">
+        <ProductGrid category={selectedCategory} openCart={openCart} />
       </section>
 
-      {/* ✅ Featured Products - Showcase Best Sellers */}
-      <section className="container mx-auto px-6 py-8">
+      {/* 🌟 Featured */}
+      <section className="container mx-auto px-6 py-10">
         <FeaturedProducts />
       </section>
 
-      {/* ✅ Shop Benefits Section */}
+      {/* 💡 Benefits */}
       <ShopBenefits />
 
-      {/* ✅ Cart Sidebar - Always present but controlled by state */}
-      <CartSidebar/>
+      {/* 🧺 Cart Drawer */}
+      <CartSidebar isOpen={isCartOpen} onClose={closeCart} />
     </main>
   );
 };

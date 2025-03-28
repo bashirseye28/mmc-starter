@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
       frequency: session.metadata?.donation_frequency || "One-time",
       donor_name: session.metadata?.donor_name || "Anonymous",
       donor_email: session.metadata?.donor_email || "Not Provided",
-      payment_method_types: session.payment_method_types?.[0] || "Card",
+      payment_method_types: session.payment_method_types?.[0] || "Card" ,
     });
   } catch (error) {
     console.error("❌ Stripe Session Fetch Error:", error);

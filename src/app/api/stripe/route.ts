@@ -8,43 +8,44 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { cartItems, shippingCost, shippingType, customerInfo } = body;
+    const { cartItems, customerInfo, shippingData, orderId } = body;
 
-    // ✅ 1. Validate Request Data
+    // ✅ Extract shipping cost & type
+    const shippingCost: number = shippingData?.shippingCost ?? 0;
+    const shippingType: string = shippingData?.shippingType ?? "Standard Delivery";
+
+    // ✅ Validate required fields
     if (!cartItems || cartItems.length === 0) {
       return NextResponse.json({ error: "No items in cart." }, { status: 400 });
     }
 
-    if (!customerInfo || !customerInfo.name || !customerInfo.email) {
+    if (!customerInfo?.name || !customerInfo?.email) {
       return NextResponse.json({ error: "Missing customer information." }, { status: 400 });
     }
 
-    console.log("📦 Received Order Data:", {
-      cartItems,
-      shippingCost,
-      shippingType,
-      customerInfo,
-    });
+    // ✅ Format address safely
+    const address = shippingData?.address?.trim() || "N/A";
+    const city = shippingData?.city?.trim() || "N/A";
+    const postcode = shippingData?.postcode?.trim() || "N/A";
+    const country = shippingData?.country?.trim() || "N/A";
 
-    // ✅ 2. Format Address Safely
-    const address = customerInfo.address?.trim() || "N/A";
-    const city = customerInfo.city?.trim() || "N/A";
-    const postcode = customerInfo.postcode?.trim() || "N/A";
-    const country = customerInfo.country?.trim() || "N/A";
+    // ✅ Calculate subtotal and total paid
+    const subtotal = cartItems.reduce((acc: number, item: any) => acc + item.price * item.quantity, 0);
+    const totalPaid = subtotal + shippingCost;
 
-    // ✅ 3. Order Metadata (Ensuring Valid Format)
-    const orderMetadata: { [key: string]: string } = {
-      customer_name: customerInfo.name || "N/A",
-      customer_email: customerInfo.email || "N/A",
-      customer_phone: customerInfo.phone || "N/A",
-      customer_address: `${address}, ${city}, ${postcode}, ${country}`, 
-      shipping_cost: shippingCost?.toFixed(2) || "0.00",
-      shipping_type: shippingType || "Standard Delivery",
+    // ✅ Prepare Stripe metadata
+    const metadata: Record<string, string> = {
+      "Order ID": orderId || `MMC-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
+      "Customer Name": customerInfo.name,
+      "Customer Email": customerInfo.email,
+      "Phone": customerInfo.phone || "N/A",
+      "Shipping Address": `${address}, ${city}, ${postcode}, ${country}`,
+      "Shipping Method": shippingType,
+      "Shipping Cost": shippingCost.toFixed(2),
+      "Total Paid": totalPaid.toFixed(2), // ✅ Added
     };
 
-    console.log("📝 Stripe Metadata:", orderMetadata);
-
-    // ✅ 4. Format Line Items for Stripe
+    // ✅ Build line items (products)
     const lineItems = cartItems.map((item: any) => ({
       price_data: {
         currency: "gbp",
@@ -58,40 +59,38 @@ export async function POST(req: Request) {
       quantity: item.quantity,
     }));
 
-    // ✅ 5. Add Shipping as a Separate Line Item
-    if (shippingCost > 0) {
-      lineItems.push({
-        price_data: {
-          currency: "gbp",
-          product_data: {
-            name: "Shipping Cost",
-            description: shippingType || "Standard Delivery",
-          },
-          unit_amount: Math.round(shippingCost * 100),
+    // ✅ Add shipping as separate line item
+    lineItems.push({
+      price_data: {
+        currency: "gbp",
+        product_data: {
+          name: "Shipping",
+          description: shippingType,
+          images: [], // required by Stripe API
         },
-        quantity: 1,
-      });
-    }
+        unit_amount: Math.round(shippingCost * 100),
+      },
+      quantity: 1,
+    });
 
-    // ✅ 6. Create Stripe Checkout Session
+    // ✅ Create Stripe session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card", "paypal"],
       line_items: lineItems,
       mode: "payment",
+      customer_email: customerInfo.email,
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/cancel`,
       payment_intent_data: {
-        metadata: orderMetadata,
+        metadata,
       },
+      metadata, // for webhooks or review
     });
-
-    console.log("✅ Stripe Session Created:", session.url);
 
     return NextResponse.json({ url: session.url });
 
   } catch (error: any) {
     console.error("❌ Stripe Checkout Error:", error.message);
-
     return NextResponse.json(
       { error: `Payment failed: ${error.message}` },
       { status: 500 }

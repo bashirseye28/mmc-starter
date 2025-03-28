@@ -7,10 +7,10 @@ import { faShoppingBag } from "@fortawesome/free-solid-svg-icons";
 const ShopHero = () => {
   return (
     <Hero
-      title=" – Every Purchase Supports"
+      title="Welcome to the MMC Shop"
       highlight="Shop with Purpose"
-      subtitle="Authentic Murid essentials, from Rosaries to Café Touba. Every order helps fund our community projects and the KST Islamic Centre."
-      image="https://res.cloudinary.com/dnmoy5wua/image/upload/v1742058709/shop-hero_dmmqzf.webp" // ✅ Ensure the correct image path
+      subtitle="Explore authentic Murid essentials — from handcrafted Rosaries to Café Touba. Every purchase supports our community and the KST Islamic Centre."
+      image="https://res.cloudinary.com/dnmoy5wua/image/upload/v1742058709/shop-hero_dmmqzf.webp"
       ctaText="Browse Products"
       ctaLink="#products"
       ctaPrimaryIcon={<FontAwesomeIcon icon={faShoppingBag} />}

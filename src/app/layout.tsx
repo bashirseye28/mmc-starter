@@ -7,8 +7,8 @@ import Navbar from "@/components/Navbar/Navbar";
 import Footer from "@/components/Footer/Footer";
 import TopHeader from "@/components/Navbar/TopHeader";
 import { CartProvider } from "@/context/CartContext";
+import Head from "next/head";
 
-// ✅ Optimized Font Loading
 const inter = Inter({
   subsets: ["latin"],
   display: "swap",
@@ -25,9 +25,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={inter.className}>
-      <head>
+      <Head>
         <link rel="icon" href="/images/logo.png" sizes="any" />
-      </head>
+      </Head>
       <body className="bg-lightBg text-darkText">
         <TopHeader />
         <Navbar />

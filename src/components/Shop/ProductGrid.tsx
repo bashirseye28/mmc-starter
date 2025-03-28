@@ -11,12 +11,15 @@ import { Product } from "@/types/types";
 
 interface ProductGridProps {
   category: string;
-  openCart: () => void; // ✅ Fix: Ensure openCart is passed as a prop
+  openCart: () => void;
 }
 
+const PAGE_SIZE = 8;
+
 const ProductGrid: React.FC<ProductGridProps> = ({ category, openCart }) => {
-  const { addToCart } = useCart(); // ✅ Removed openCart from here
-  const [products, setProducts] = useState<Product[]>([]);
+  const { addToCart } = useCart();
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,6 +27,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ category, openCart }) => {
     const fetchProducts = async () => {
       setLoading(true);
       setError(null);
+
       try {
         const querySnapshot = await getDocs(collection(db, "products"));
         const productList = querySnapshot.docs.map((doc) => ({
@@ -31,59 +35,104 @@ const ProductGrid: React.FC<ProductGridProps> = ({ category, openCart }) => {
           ...doc.data(),
         })) as Product[];
 
-        setProducts(category === "All" ? productList : productList.filter((p) => p.category === category));
-      } catch (error) {
-        console.error("Failed to fetch products:", error);
+        const filtered = category === "All"
+          ? productList
+          : productList.filter((p) => p.category === category);
+
+        setAllProducts(filtered);
+        setVisibleCount(PAGE_SIZE); // Reset visible count on category change
+      } catch (err) {
+        console.error("❌ Failed to fetch products:", err);
         setError("Failed to load products.");
       }
+
       setLoading(false);
     };
 
     fetchProducts();
   }, [category]);
 
+  const visibleProducts = allProducts.slice(0, visibleCount);
+
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat("en-GB", {
+      style: "currency",
+      currency: "GBP",
+    }).format(price);
+
   return (
-    <section className="py-12 container mx-auto px-6">
+    <section className="py-12 container mx-auto px-6" id="products">
       <h2 className="text-3xl font-bold text-primary text-center">Our Products</h2>
-      <p className="text-gray-600 text-center mt-2">Explore our high-quality products available for purchase.</p>
+      <p className="text-gray-600 text-center mt-2">
+        Explore our high-quality items available for purchase.
+      </p>
 
       {loading ? (
-        <div className="text-center py-10">
-          <p className="text-lg text-primary font-medium">Loading products...</p>
-        </div>
+        <div className="text-center py-10 text-primary text-lg font-medium">Loading products...</div>
       ) : error ? (
-        <div className="text-center py-10">
-          <p className="text-lg text-red-600">{error}</p>
-        </div>
-      ) : products.length === 0 ? (
-        <div className="text-center py-10">
-          <p className="text-lg text-gray-600">No products available in this category.</p>
+        <div className="text-center py-10 text-red-600 text-lg">{error}</div>
+      ) : visibleProducts.length === 0 ? (
+        <div className="text-center py-10 text-gray-600 text-lg">
+          No products found in this category.
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-8">
-          {products.map((product) => (
-            <div key={product.id} className="bg-white border rounded-lg shadow-md p-4 hover:shadow-lg transition">
-              <div className="relative w-full h-48">
-                <Image src={product.image} alt={product.name} layout="fill" objectFit="cover" className="rounded-md" />
-              </div>
-
-              <h3 className="text-lg font-semibold text-primary mt-3">{product.name}</h3>
-              <p className="text-gray-600 mt-1">£{product.price.toFixed(2)}</p>
-
-              {/* ✅ Add to Cart Button (Automatically opens cart) */}
-              <button
-                onClick={() => {
-                  addToCart({ ...product, quantity: 1 });
-                  openCart(); // ✅ Open cart when adding a product
-                }}
-                className="mt-4 w-full bg-gold text-black py-2 rounded-lg flex items-center justify-center gap-2 font-medium hover:bg-yellow-500 transition"
+        <>
+          {/* ✅ Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-10">
+            {visibleProducts.map((product) => (
+              <div
+                key={product.id}
+                className="bg-white border rounded-lg shadow-md p-4 hover:shadow-xl transition transform hover:-translate-y-1"
               >
-                <FontAwesomeIcon icon={faShoppingCart} />
-                Add to Cart
+                {/* Image */}
+                <div className="relative w-full h-48 mb-3">
+                  {product.image ? (
+                    <Image
+                      src={product.image}
+                      alt={product.name}
+                      layout="fill"
+                      objectFit="cover"
+                      className="rounded-md"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
+                      No Image
+                    </div>
+                  )}
+                </div>
+
+                {/* Info */}
+                <h3 className="text-lg font-semibold text-primary">{product.name}</h3>
+                <p className="text-gray-600 mt-1">{formatPrice(product.price)}</p>
+
+                {/* Add to Cart */}
+                <button
+                  onClick={() => {
+                    addToCart({ ...product, quantity: 1 });
+                    openCart();
+                  }}
+                  className="mt-4 w-full bg-gold text-black py-2 rounded-lg flex items-center justify-center gap-2 font-medium hover:bg-yellow-500 transition"
+                  aria-label={`Add ${product.name} to cart`}
+                >
+                  <FontAwesomeIcon icon={faShoppingCart} />
+                  Add to Cart
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* ✅ Load More Button */}
+          {visibleCount < allProducts.length && (
+            <div className="text-center mt-10">
+              <button
+                onClick={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
+                className="px-6 py-3 bg-primary text-white font-medium rounded-lg shadow hover:bg-opacity-90 transition"
+              >
+                Load More
               </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </section>
   );

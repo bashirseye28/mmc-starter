@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faUser,
@@ -17,15 +17,21 @@ import Image from "next/image";
 
 interface ReviewOrderProps {
   customerData: { name: string; email: string; phone: string };
-  shippingData: { 
-    address: string; 
-    city: string; 
-    postcode: string; 
-    country: string; 
+  shippingData: {
+    address: string;
+    city: string;
+    postcode: string;
+    country: string;
     shippingCost: number;
     shippingType: string;
   };
-  cartItems: { id: string; name: string; price: number; quantity: number; image: string }[];
+  cartItems: {
+    id: string;
+    name: string;
+    price: number;
+    quantity: number;
+    image: string;
+  }[];
   subtotal: number;
   total: number;
   onNext: () => void;
@@ -51,18 +57,42 @@ const ReviewOrder = ({
 }: ReviewOrderProps) => {
   const [isEditingPersonal, setIsEditingPersonal] = useState(false);
   const [isEditingShipping, setIsEditingShipping] = useState(false);
-  const [editedCustomer, setEditedCustomer] = useState({ ...customerData });
-  const [editedShipping, setEditedShipping] = useState({ ...shippingData });
 
-  // ✅ Save Personal Details
+  const [editedCustomer, setEditedCustomer] = useState({
+    name: customerData?.name || "",
+    email: customerData?.email || "",
+    phone: customerData?.phone || "",
+  });
+
+  const [editedShipping, setEditedShipping] = useState({
+    address: shippingData?.address || "",
+    city: shippingData?.city || "",
+    postcode: shippingData?.postcode || "",
+  });
+
+  useEffect(() => {
+    setEditedCustomer({
+      name: customerData?.name || "",
+      email: customerData?.email || "",
+      phone: customerData?.phone || "",
+    });
+    setEditedShipping({
+      address: shippingData?.address || "",
+      city: shippingData?.city || "",
+      postcode: shippingData?.postcode || "",
+    });
+  }, [customerData, shippingData]);
+
   const handleSavePersonal = () => {
     updateCustomerData(editedCustomer);
     setIsEditingPersonal(false);
   };
 
-  // ✅ Save Shipping Address
   const handleSaveShipping = () => {
-    updateShippingData(editedShipping);
+    updateShippingData({
+      ...shippingData,
+      ...editedShipping,
+    });
     setIsEditingShipping(false);
   };
 
@@ -70,44 +100,53 @@ const ReviewOrder = ({
     <div className="bg-white shadow-lg rounded-lg p-6">
       <h2 className="text-2xl font-bold text-primary mb-6">Review Your Order</h2>
 
-      {/* ✅ Editable Personal & Delivery Details */}
+      {/* 👤 Personal & Shipping Info */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
-        
-        {/* Personal Details */}
-        <div className="border border-gray-300 rounded-lg p-4 bg-gray-50 relative">
+        {/* Personal Info */}
+        <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 relative">
           <h3 className="text-lg font-semibold text-gray-700">
-            <FontAwesomeIcon icon={faUser} className="text-primary" /> Personal Details
+            <FontAwesomeIcon icon={faUser} className="text-primary mr-2" />
+            Customer Info
           </h3>
-          <button 
-            onClick={() => setIsEditingPersonal(!isEditingPersonal)} 
-            className="absolute top-4 right-4 bg-white border p-2 rounded-lg hover:shadow-md transition"
+          <button
+            onClick={() => setIsEditingPersonal(!isEditingPersonal)}
+            className="absolute top-4 right-4 bg-white border px-3 py-2 rounded hover:shadow transition"
           >
             <FontAwesomeIcon icon={isEditingPersonal ? faSave : faEdit} />
           </button>
-          <div className="mt-2 text-gray-600 space-y-2">
+          <div className="mt-3 space-y-2 text-sm text-gray-700">
             {isEditingPersonal ? (
               <>
-                <input 
+                <input
                   type="text"
-                  className="w-full p-2 border rounded"
                   value={editedCustomer.name}
-                  onChange={(e) => setEditedCustomer({ ...editedCustomer, name: e.target.value })}
+                  onChange={(e) =>
+                    setEditedCustomer({ ...editedCustomer, name: e.target.value })
+                  }
+                  placeholder="Full Name"
+                  className="w-full p-2 border rounded"
                 />
-                <input 
+                <input
                   type="email"
-                  className="w-full p-2 border rounded"
                   value={editedCustomer.email}
-                  onChange={(e) => setEditedCustomer({ ...editedCustomer, email: e.target.value })}
-                />
-                <input 
-                  type="tel"
+                  onChange={(e) =>
+                    setEditedCustomer({ ...editedCustomer, email: e.target.value })
+                  }
+                  placeholder="Email"
                   className="w-full p-2 border rounded"
-                  value={editedCustomer.phone}
-                  onChange={(e) => setEditedCustomer({ ...editedCustomer, phone: e.target.value })}
                 />
-                <button 
+                <input
+                  type="tel"
+                  value={editedCustomer.phone}
+                  onChange={(e) =>
+                    setEditedCustomer({ ...editedCustomer, phone: e.target.value })
+                  }
+                  placeholder="Phone"
+                  className="w-full p-2 border rounded"
+                />
+                <button
                   onClick={handleSavePersonal}
-                  className="mt-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-green-700"
+                  className="mt-2 px-4 py-2 bg-primary text-white rounded hover:bg-green-700"
                 >
                   Save
                 </button>
@@ -122,41 +161,51 @@ const ReviewOrder = ({
           </div>
         </div>
 
-        {/* ✅ Editable Delivery Details */}
-        <div className="border border-gray-300 rounded-lg p-4 bg-gray-50 relative">
+        {/* Delivery Info */}
+        <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 relative">
           <h3 className="text-lg font-semibold text-gray-700">
-            <FontAwesomeIcon icon={faMapMarkerAlt} className="text-primary" /> Delivery Information
+            <FontAwesomeIcon icon={faMapMarkerAlt} className="text-primary mr-2" />
+            Shipping Info
           </h3>
-          <button 
-            onClick={() => setIsEditingShipping(!isEditingShipping)} 
-            className="absolute top-4 right-4 bg-white border p-2 rounded-lg hover:shadow-md transition"
+          <button
+            onClick={() => setIsEditingShipping(!isEditingShipping)}
+            className="absolute top-4 right-4 bg-white border px-3 py-2 rounded hover:shadow transition"
           >
             <FontAwesomeIcon icon={isEditingShipping ? faSave : faEdit} />
           </button>
-          <div className="mt-2 text-gray-600 space-y-2">
+          <div className="mt-3 space-y-2 text-sm text-gray-700">
             {isEditingShipping ? (
               <>
-                <input 
+                <input
                   type="text"
-                  className="w-full p-2 border rounded"
                   value={editedShipping.address}
-                  onChange={(e) => setEditedShipping({ ...editedShipping, address: e.target.value })}
-                />
-                <input 
-                  type="text"
+                  onChange={(e) =>
+                    setEditedShipping({ ...editedShipping, address: e.target.value })
+                  }
+                  placeholder="Address"
                   className="w-full p-2 border rounded"
+                />
+                <input
+                  type="text"
                   value={editedShipping.city}
-                  onChange={(e) => setEditedShipping({ ...editedShipping, city: e.target.value })}
-                />
-                <input 
-                  type="text"
+                  onChange={(e) =>
+                    setEditedShipping({ ...editedShipping, city: e.target.value })
+                  }
+                  placeholder="City"
                   className="w-full p-2 border rounded"
-                  value={editedShipping.postcode}
-                  onChange={(e) => setEditedShipping({ ...editedShipping, postcode: e.target.value })}
                 />
-                <button 
+                <input
+                  type="text"
+                  value={editedShipping.postcode}
+                  onChange={(e) =>
+                    setEditedShipping({ ...editedShipping, postcode: e.target.value })
+                  }
+                  placeholder="Postcode"
+                  className="w-full p-2 border rounded"
+                />
+                <button
                   onClick={handleSaveShipping}
-                  className="mt-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-green-700"
+                  className="mt-2 px-4 py-2 bg-primary text-white rounded hover:bg-green-700"
                 >
                   Save
                 </button>
@@ -166,45 +215,65 @@ const ReviewOrder = ({
                 <p><strong>Address:</strong> {shippingData.address}</p>
                 <p><strong>City:</strong> {shippingData.city}</p>
                 <p><strong>Postcode:</strong> {shippingData.postcode}</p>
-                <p><strong>Delivery Method:</strong> {shippingData.shippingType}</p>
+                <p><strong>Method:</strong> {shippingData.shippingType}</p>
               </>
             )}
           </div>
         </div>
       </div>
 
-      {/* ✅ Order Summary */}
-      <h3 className="text-lg font-semibold text-gray-700 mb-4">Order Summary</h3>
-      <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
+      {/* 🛍 Cart Summary */}
+      <h3 className="text-lg font-semibold text-primary mb-4">Cart Summary</h3>
+      <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
         {cartItems.map((item) => (
-          <div key={item.id} className="flex items-center justify-between border-b py-3">
-            <div className="flex items-center gap-3">
-              <Image src={item.image} alt={item.name} width={50} height={50} className="rounded-lg" />
-              <p className="text-gray-700 font-medium">{item.name}</p>
+          <div key={item.id} className="flex items-center justify-between border-b py-4">
+            <div className="flex items-center gap-4">
+              <Image src={item.image} alt={item.name} width={50} height={50} className="rounded" />
+              <div>
+                <p className="font-medium text-gray-800">{item.name}</p>
+                <p className="text-sm text-gray-500">£{item.price.toFixed(2)} each</p>
+              </div>
             </div>
+
             <div className="flex items-center gap-2">
-              <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="text-primary">
-                <FontAwesomeIcon icon={faMinus} />
+              <button onClick={() => updateQuantity(item.id, item.quantity - 1)}>
+                <FontAwesomeIcon icon={faMinus} className="text-primary" />
               </button>
               <span className="font-semibold">{item.quantity}</span>
-              <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="text-primary">
-                <FontAwesomeIcon icon={faPlus} />
+              <button onClick={() => updateQuantity(item.id, item.quantity + 1)}>
+                <FontAwesomeIcon icon={faPlus} className="text-primary" />
               </button>
-              <button onClick={() => removeFromCart(item.id)} className="text-red-500">
-                <FontAwesomeIcon icon={faTrash} />
+              <button onClick={() => removeFromCart(item.id)}>
+                <FontAwesomeIcon icon={faTrash} className="text-red-500" />
               </button>
             </div>
-            <p className="text-gray-700 font-medium">£{(item.price * item.quantity).toFixed(2)}</p>
+
+            <p className="font-medium text-gray-700">
+              £{(item.price * item.quantity).toFixed(2)}
+            </p>
           </div>
         ))}
+
+        {/* Totals */}
+        <div className="text-right mt-4 space-y-1 text-sm">
+          <p>Subtotal: <span className="font-semibold">£{subtotal.toFixed(2)}</span></p>
+          <p>Shipping: <span className="font-semibold">£{shippingData.shippingCost.toFixed(2)}</span></p>
+          <p className="text-lg font-bold text-primary">Total: £{total.toFixed(2)}</p>
+        </div>
       </div>
 
       {/* ✅ Buttons */}
       <div className="flex justify-between mt-8 gap-4">
-        <button onClick={onBack} className="border-2 border-primary px-6 py-3 rounded-lg hover:bg-primary hover:text-white">
+        <button
+          onClick={onBack}
+          className="border-2 border-primary px-6 py-3 rounded-lg hover:bg-primary hover:text-white transition"
+        >
           <FontAwesomeIcon icon={faArrowLeft} /> Back
         </button>
-        <button onClick={onNext} className="px-6 py-3 bg-gold text-black rounded-lg hover:bg-yellow-500">
+        <button
+          onClick={onNext}
+          className="px-6 py-3 bg-gold text-black rounded-lg hover:bg-yellow-500 transition"
+        >
           Proceed to Payment <FontAwesomeIcon icon={faArrowRight} />
         </button>
       </div>

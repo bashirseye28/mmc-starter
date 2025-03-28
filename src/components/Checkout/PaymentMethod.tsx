@@ -16,8 +16,15 @@ interface PaymentMethodProps {
   onConfirm: (method: string) => void;
   cartItems: { id: string; name: string; price: number; quantity: number }[];
   customerData: { name: string; email: string; phone: string };
-  shippingData: { address: string; city: string; postcode: string; country: string; shippingCost: number };
-  total?: number; // ✅ Ensure `total` is optional to prevent crashes
+  shippingData: {
+    address: string;
+    city: string;
+    postcode: string;
+    country: string;
+    shippingCost: number;
+    shippingType: string;
+  };
+  total?: number;
 }
 
 const PaymentMethod = ({
@@ -26,38 +33,44 @@ const PaymentMethod = ({
   cartItems,
   customerData,
   shippingData,
-  total = 0, // ✅ Default value to prevent errors
+  total = 0,
 }: PaymentMethodProps) => {
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
-  const whatsappNumber = "+447541475547"; // ✅ Replace with actual WhatsApp number
+  const whatsappNumber = "+447541475547"; // ✅ Replace with your number
 
   const handleConfirmOrder = () => {
     if (!selectedMethod) return;
 
     if (selectedMethod === "whatsapp") {
-      // ✅ Format order details for WhatsApp
-      const orderDetails = cartItems
-        .map(item => `${item.name} x${item.quantity} - £${(item.price * item.quantity).toFixed(2)}`)
+      const orderLines = cartItems
+        .map(
+          (item) =>
+            `• ${item.name} x${item.quantity} — £${(item.price * item.quantity).toFixed(2)}`
+        )
         .join("\n");
 
-      const formattedMessage = encodeURIComponent(`
-📦 *Order Summary*:
-${orderDetails}
+      const message = `
+🛍️ *Order Request from Murid Marketplace*
 
-📍 *Delivery Address*:
-${shippingData.address}, ${shippingData.city}, ${shippingData.postcode}, ${shippingData.country}
+📦 *Items:*
+${orderLines}
 
-👤 *Customer Info*:
-Name: ${customerData.name}
-Email: ${customerData.email}
-Phone: ${customerData.phone}
+🚚 *Delivery Method:* ${shippingData.shippingType}
+📍 *Address:* ${shippingData.address}, ${shippingData.city}, ${shippingData.postcode}, ${shippingData.country}
 
-💰 *Total Price (Incl. Delivery)*: £${total.toFixed(2)}
+👤 *Customer Info:*
+• Name: ${customerData.name}
+• Email: ${customerData.email}
+• Phone: ${customerData.phone}
 
-✅ Please confirm your order via WhatsApp!
-      `);
+💰 *Total (incl. delivery):* £${total.toFixed(2)}
 
-      const whatsappURL = `https://wa.me/${whatsappNumber}?text=${formattedMessage}`;
+I would like to place this order. Please confirm availability or next steps. Thank you.
+      `;
+
+      const whatsappURL = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+        message
+      )}`;
       window.open(whatsappURL, "_blank");
     } else {
       onConfirm(selectedMethod);
@@ -66,12 +79,12 @@ Phone: ${customerData.phone}
 
   return (
     <div className="bg-white shadow-lg rounded-lg p-8">
-      {/* ✅ Secure Checkout Header */}
+      {/* Header */}
       <h3 className="text-2xl font-bold text-primary mb-6 text-center sm:text-left">
         Secure Checkout
       </h3>
 
-      {/* ✅ Payment Method Icons (Always Colored) */}
+      {/* Payment Icons */}
       <div className="flex items-center justify-center gap-4 mb-6">
         <Image src="/images/visa.png" alt="Visa" width={50} height={30} />
         <Image src="/images/mastercard.png" alt="Mastercard" width={50} height={30} />
@@ -84,9 +97,9 @@ Phone: ${customerData.phone}
         Secure transactions powered by <strong>Stripe</strong>
       </p>
 
-      {/* ✅ Two Payment Options - More Professional UI */}
+      {/* Payment Options */}
       <div className="flex flex-col gap-4">
-        {/* Pay with Stripe */}
+        {/* Stripe */}
         <button
           className={`border-2 p-5 rounded-lg flex items-center justify-between transition ${
             selectedMethod === "stripe"
@@ -97,12 +110,16 @@ Phone: ${customerData.phone}
         >
           <div className="flex items-center gap-3">
             <FontAwesomeIcon icon={faCreditCard} className="text-primary text-2xl" />
-            <span className="font-semibold">Pay Securely (Card, PayPal, Apple, Google)</span>
+            <span className="font-semibold">
+              Pay Securely (Card, PayPal, Apple, Google)
+            </span>
           </div>
-          {selectedMethod === "stripe" && <FontAwesomeIcon icon={faCheckCircle} className="text-green-500" />}
+          {selectedMethod === "stripe" && (
+            <FontAwesomeIcon icon={faCheckCircle} className="text-green-500" />
+          )}
         </button>
 
-        {/* WhatsApp Checkout */}
+        {/* WhatsApp */}
         <button
           className={`border-2 p-5 rounded-lg flex items-center justify-between transition ${
             selectedMethod === "whatsapp"
@@ -115,26 +132,29 @@ Phone: ${customerData.phone}
             <FontAwesomeIcon icon={faWhatsapp} className="text-green-500 text-2xl" />
             <span className="font-semibold">WhatsApp Checkout</span>
           </div>
-          {selectedMethod === "whatsapp" && <FontAwesomeIcon icon={faCheckCircle} className="text-green-500" />}
+          {selectedMethod === "whatsapp" && (
+            <FontAwesomeIcon icon={faCheckCircle} className="text-green-500" />
+          )}
         </button>
       </div>
 
-      {/* ✅ Total Amount */}
+      {/* Totals */}
       <div className="mt-6 border-t pt-4 text-lg font-semibold text-gray-800">
         <p className="flex justify-between">
           <span>Total (incl. delivery):</span>
-          <span className="text-primary">£{(total || 0).toFixed(2)}</span> {/* ✅ Fixed */}
+          <span className="text-primary">£{total.toFixed(2)}</span>
         </p>
       </div>
 
-      {/* ✅ Buttons */}
+      {/* Buttons */}
       <div className="flex justify-between mt-8 gap-4">
-        {/* Back Button */}
-        <button onClick={onBack} className="border-2 border-primary text-primary px-6 py-3 rounded-lg hover:bg-primary hover:text-white transition">
+        <button
+          onClick={onBack}
+          className="border-2 border-primary text-primary px-6 py-3 rounded-lg hover:bg-primary hover:text-white transition"
+        >
           <FontAwesomeIcon icon={faArrowLeft} /> Back
         </button>
 
-        {/* Confirm Order Button (Only Active When a Payment Method is Selected) */}
         <button
           onClick={handleConfirmOrder}
           className={`px-6 py-3 rounded-lg flex items-center justify-center gap-2 transition ${

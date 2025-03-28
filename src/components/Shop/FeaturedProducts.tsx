@@ -5,7 +5,7 @@ import Image from "next/image";
 import { db } from "@/app/lib/firebaseConfig";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faShoppingCart, faStar } from "@fortawesome/free-solid-svg-icons";
+import { faShoppingCart, faStar, faBoxOpen } from "@fortawesome/free-solid-svg-icons";
 import { useCart } from "@/context/CartContext";
 
 // ✅ Define Product Type
@@ -15,9 +15,9 @@ interface Product {
   price: number;
   image: string;
   category: string;
+  featured?: boolean;
 }
 
-// ✅ Featured Products Component
 const FeaturedProducts = () => {
   const { addToCart } = useCart();
   const [products, setProducts] = useState<Product[]>([]);
@@ -30,7 +30,6 @@ const FeaturedProducts = () => {
       setError(null);
 
       try {
-        // ✅ Query Firestore for featured products
         const q = query(collection(db, "products"), where("featured", "==", true));
         const querySnapshot = await getDocs(q);
 
@@ -41,7 +40,7 @@ const FeaturedProducts = () => {
 
         setProducts(productList);
       } catch (error) {
-        console.error("Failed to fetch featured products:", error);
+        console.error("❌ Failed to fetch featured products:", error);
         setError("Failed to load featured products.");
       }
 
@@ -52,54 +51,72 @@ const FeaturedProducts = () => {
   }, []);
 
   return (
-    <section className="py-12 container mx-auto">
-      {/* ✅ Section Title */}
-      <div className="text-center">
-        <h2 className="text-3xl font-bold text-primary flex items-center justify-center gap-2">
-          <FontAwesomeIcon icon={faStar} className="text-gold text-2xl" />
-          Featured Products
-        </h2>
-        <p className="text-gray-600 mt-2">Handpicked items just for you.</p>
-      </div>
-
-      {/* ✅ Loading / Error Handling */}
-      {loading ? (
-        <div className="text-center py-10">
-          <p className="text-lg text-primary font-medium">Loading featured products...</p>
+    <section className="py-16 bg-white" id="featured-products">
+      <div className="container mx-auto px-6">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-bold text-primary flex items-center justify-center gap-2">
+            <FontAwesomeIcon icon={faStar} className="text-gold text-2xl" />
+            Featured Products
+          </h2>
+          <p className="text-gray-600 mt-2">Handpicked Murid essentials just for you.</p>
         </div>
-      ) : error ? (
-        <div className="text-center py-10">
-          <p className="text-lg text-red-600">{error}</p>
-        </div>
-      ) : products.length === 0 ? (
-        <div className="text-center py-10">
-          <p className="text-lg text-gray-600">No featured products available.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-8">
-          {products.map((product) => (
-            <div key={product.id} className="bg-white border rounded-lg shadow-md p-4 hover:shadow-lg transition">
-              {/* ✅ Product Image */}
-              <div className="relative w-full h-48">
-                <Image src={product.image} alt={product.name} layout="fill" objectFit="cover" className="rounded-md" />
-              </div>
 
-              {/* ✅ Product Info */}
-              <h3 className="text-lg font-semibold text-primary mt-3">{product.name}</h3>
-              <p className="text-gray-600 mt-1">£{product.price.toFixed(2)}</p>
-
-              {/* ✅ Add to Cart Button */}
-              <button
-                onClick={() => addToCart({ ...product, quantity: 1 })}
-                className="mt-4 w-full bg-gold text-black py-2 rounded-lg flex items-center justify-center gap-2 font-medium hover:bg-yellow-500 transition"
+        {loading ? (
+          <p className="text-center text-primary font-medium text-lg">Loading featured products...</p>
+        ) : error ? (
+          <p className="text-center text-red-600 font-medium">{error}</p>
+        ) : products.length === 0 ? (
+          <div className="text-center text-gray-500 mt-10 flex flex-col items-center gap-2">
+            <FontAwesomeIcon icon={faBoxOpen} className="text-3xl text-gray-300" />
+            <p className="text-lg">No featured products available.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {products.map((product) => (
+              <article
+                key={product.id}
+                className="relative bg-white border border-gray-200 rounded-lg shadow-sm p-4 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1"
               >
-                <FontAwesomeIcon icon={faShoppingCart} />
-                Add to Cart
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
+                {/* 🟨 Badge */}
+                <span className="absolute top-3 left-3 bg-gold text-black text-xs font-semibold px-2 py-1 rounded-full shadow">
+                  ★ Featured
+                </span>
+
+                {/* 📷 Product Image */}
+                <div className="relative w-full h-48 rounded overflow-hidden">
+                  <Image
+                    src={product.image}
+                    alt={product.name || "Product image"}
+                    layout="fill"
+                    objectFit="cover"
+                    className="rounded-md"
+                    priority
+                  />
+                </div>
+
+                {/* ℹ️ Product Info */}
+                <h3 className="text-lg font-semibold text-primary mt-4">{product.name}</h3>
+                <p className="text-gray-600 mt-1">
+                  {new Intl.NumberFormat("en-GB", {
+                    style: "currency",
+                    currency: "GBP",
+                  }).format(product.price)}
+                </p>
+
+                {/* 🛒 Add to Cart */}
+                <button
+                  onClick={() => addToCart({ ...product, quantity: 1 })}
+                  className="mt-4 w-full bg-gold text-black font-medium py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-yellow-500 transition"
+                  aria-label={`Add ${product.name} to cart`}
+                >
+                  <FontAwesomeIcon icon={faShoppingCart} />
+                  Add to Cart
+                </button>
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
     </section>
   );
 };
