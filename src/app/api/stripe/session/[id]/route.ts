@@ -5,9 +5,11 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: "2025-02-24.acacia",
 });
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, context: { params: { id: string } }) {
+  const { id } = context.params;
+
   try {
-    const session = await stripe.checkout.sessions.retrieve(params.id);
+    const session = await stripe.checkout.sessions.retrieve(id);
 
     return NextResponse.json({
       metadata: session.metadata || {},
