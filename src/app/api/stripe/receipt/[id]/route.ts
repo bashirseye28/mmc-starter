@@ -3,7 +3,6 @@ import Stripe from 'stripe';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-// ✅ Base64 logo (replace this with your actual full string)
 const BASE64_LOGO = 'data:image/png;base64,REPLACE_WITH_YOUR_LOGO_BASE64';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
@@ -17,9 +16,14 @@ type ReceiptItem = {
   total: string;
 };
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+export async function GET(
+  req: Request,
+  context: { params: { id: string } }
+) {
+  const { id } = context.params;
+
   try {
-    const session = await stripe.checkout.sessions.retrieve(params.id, {
+    const session = await stripe.checkout.sessions.retrieve(id, {
       expand: ['line_items', 'line_items.data.price.product'],
     });
 
@@ -30,7 +34,6 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
     const metadata = session.metadata || {};
     const email = session.customer_email || 'N/A';
     const amountPaid = (session.amount_total || 0) / 100;
-
     const lineItems = (session as any).line_items?.data || [];
 
     const items: ReceiptItem[] = lineItems
@@ -61,15 +64,12 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
     const formattedDate = now.toLocaleDateString('en-GB');
     const formattedTime = now.toLocaleTimeString('en-GB');
 
-    // 🧾 PDF Generation
     const doc = new jsPDF();
 
-    // ✅ Logo (optional)
     if (BASE64_LOGO) {
       doc.addImage(BASE64_LOGO, 'PNG', 15, 10, 30, 30);
     }
 
-    // Header
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(18);
     doc.setTextColor(0, 118, 118);
@@ -79,17 +79,14 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
     doc.setTextColor(51, 51, 51);
     doc.text('Registered Charity No: 1194666', 105, 27, { align: 'center' });
 
-    // Info
     doc.setFontSize(10);
     doc.setTextColor(90);
     doc.text(`Date: ${formattedDate}   Time: ${formattedTime}`, 15, 43);
-
     doc.setTextColor(33);
     doc.text(`Receipt for Order: ${metadata['Order ID'] || 'N/A'}`, 15, 51);
     doc.text(`Customer Name: ${metadata['Customer Name'] || 'N/A'}`, 15, 57);
     doc.text(`Email: ${email}`, 15, 63);
 
-    // Items Table
     autoTable(doc, {
       startY: 72,
       head: [['Item', 'Qty', 'Unit Price', 'Subtotal']],
@@ -106,7 +103,6 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
 
     const summaryStartY = (doc as any).lastAutoTable?.finalY || 100;
 
-    // Summary
     doc.setFontSize(10);
     doc.setTextColor(50);
     doc.text('Shipping Method:', 15, summaryStartY);
@@ -123,7 +119,6 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
     doc.text('Total Paid:', 15, summaryStartY + 20);
     doc.text(`£${amountPaid.toFixed(2)}`, 60, summaryStartY + 20);
 
-    // Footer
     doc.setFontSize(12);
     doc.setTextColor(0, 118, 118);
     doc.text(
@@ -138,7 +133,7 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
     return new Response(Buffer.from(pdfBuffer), {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename=receipt-${params.id}.pdf`,
+        'Content-Disposition': `attachment; filename=receipt-${id}.pdf`,
       },
     });
   } catch (error: any) {
