@@ -3,11 +3,13 @@ import Stripe from 'stripe';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+// ✅ Base64 logo (replace this with your actual full string)
+const BASE64_LOGO = 'data:image/png;base64,REPLACE_WITH_YOUR_LOGO_BASE64';
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: '2025-02-24.acacia',
 });
 
-// Type for line items
 type ReceiptItem = {
   name: string;
   quantity: number;
@@ -18,7 +20,7 @@ type ReceiptItem = {
 export async function GET(_: Request, { params }: { params: { id: string } }) {
   try {
     const session = await stripe.checkout.sessions.retrieve(params.id, {
-      expand: ['line_items.data.price.product'],
+      expand: ['line_items', 'line_items.data.price.product'],
     });
 
     if (!session) {
@@ -37,17 +39,17 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
         const quantity = item.quantity || 1;
         const unitPrice = (item.price?.unit_amount || 0) / 100;
 
-        // Handle product name (string or object)
-        const product =
-          typeof item.price?.product === 'string'
-            ? item.description || 'Product'
-            : item.price?.product?.name || item.description || 'Product';
+        const product = item.price?.product;
+        const name =
+          typeof product === 'object' && product !== null && 'name' in product
+            ? (product as Stripe.Product).name
+            : item.description || 'Product';
 
         return {
-          name: product,
+          name,
           quantity,
           price: `£${unitPrice.toFixed(2)}`,
-          total: `£${(unitPrice * quantity).toFixed(2)}`,
+          total: `£${(unitPrice * quantity).toFixed(2)}`
         };
       });
 
@@ -55,8 +57,17 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
     const shippingAddress = metadata['Shipping Address'] || 'N/A';
     const shippingCost = parseFloat(metadata['Shipping Cost'] || '0.00');
 
-    // ✅ Create PDF
+    const now = new Date();
+    const formattedDate = now.toLocaleDateString('en-GB');
+    const formattedTime = now.toLocaleTimeString('en-GB');
+
+    // 🧾 PDF Generation
     const doc = new jsPDF();
+
+    // ✅ Logo (optional)
+    if (BASE64_LOGO) {
+      doc.addImage(BASE64_LOGO, 'PNG', 15, 10, 30, 30);
+    }
 
     // Header
     doc.setFont('helvetica', 'bold');
@@ -68,31 +79,34 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
     doc.setTextColor(51, 51, 51);
     doc.text('Registered Charity No: 1194666', 105, 27, { align: 'center' });
 
-    // Customer Info
+    // Info
     doc.setFontSize(10);
-    doc.setTextColor(33);
-    doc.text(`Receipt for Order: ${metadata['Order ID'] || 'N/A'}`, 15, 45);
-    doc.text(`Customer Name: ${metadata['Customer Name'] || 'N/A'}`, 15, 51);
-    doc.text(`Email: ${email}`, 15, 57);
+    doc.setTextColor(90);
+    doc.text(`Date: ${formattedDate}   Time: ${formattedTime}`, 15, 43);
 
-    // Order Items Table
+    doc.setTextColor(33);
+    doc.text(`Receipt for Order: ${metadata['Order ID'] || 'N/A'}`, 15, 51);
+    doc.text(`Customer Name: ${metadata['Customer Name'] || 'N/A'}`, 15, 57);
+    doc.text(`Email: ${email}`, 15, 63);
+
+    // Items Table
     autoTable(doc, {
-      startY: 65,
+      startY: 72,
       head: [['Item', 'Qty', 'Unit Price', 'Subtotal']],
       body: items.map((item: ReceiptItem) => [
         item.name,
         String(item.quantity),
         item.price,
-        item.total,
+        item.total
       ]),
       theme: 'grid',
       headStyles: { fillColor: [0, 118, 118] },
-      styles: { fontSize: 10 },
+      styles: { fontSize: 10 }
     });
 
-    const summaryStartY = (doc as any).lastAutoTable?.finalY || 90;
+    const summaryStartY = (doc as any).lastAutoTable?.finalY || 100;
 
-    // Shipping Summary
+    // Summary
     doc.setFontSize(10);
     doc.setTextColor(50);
     doc.text('Shipping Method:', 15, summaryStartY);
@@ -119,7 +133,6 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
       { align: 'center' }
     );
 
-    // Output PDF
     const pdfBuffer = doc.output('arraybuffer');
 
     return new Response(Buffer.from(pdfBuffer), {
@@ -129,7 +142,7 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
       },
     });
   } catch (error: any) {
-    console.error('❌ Receipt generation error:', error.message);
+    console.error('❌ Receipt generation error:', error);
     return NextResponse.json({ error: 'Failed to generate receipt' }, { status: 500 });
   }
 }

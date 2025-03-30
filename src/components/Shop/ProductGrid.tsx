@@ -91,7 +91,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ category, openCart }) => {
                       src={product.image}
                       alt={product.name}
                       layout="fill"
-                      objectFit="cover"
+                      objectFit="contain"
                       className="rounded-md"
                     />
                   ) : (

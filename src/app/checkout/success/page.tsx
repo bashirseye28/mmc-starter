@@ -1,8 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { CheckCircle, Truck, MapPin, FileDown } from 'lucide-react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import {
+  CheckCircle,
+  Truck,
+  MapPin,
+  PackageSearch,
+  FileDown,
+} from 'lucide-react';
 
 const SuccessPage = () => {
   const router = useRouter();
@@ -10,11 +16,12 @@ const SuccessPage = () => {
   const sessionId = searchParams.get('session_id');
 
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
   const [sessionData, setSessionData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchSession = async () => {
+    const fetchSessionData = async () => {
       if (!sessionId) {
         setError('Missing session ID.');
         setLoading(false);
@@ -28,7 +35,7 @@ const SuccessPage = () => {
         if (res.ok) {
           setSessionData(data);
         } else {
-          setError(data.error || 'Unable to fetch order.');
+          setError(data.error || 'Failed to retrieve order.');
         }
       } catch (err) {
         console.error(err);
@@ -38,29 +45,41 @@ const SuccessPage = () => {
       }
     };
 
-    fetchSession();
+    fetchSessionData();
   }, [sessionId]);
 
-  const handleDownloadReceipt = () => {
+  const handleDownloadReceipt = async () => {
     if (!sessionId) return;
 
-    const link = document.createElement('a');
-    link.href = `/api/receipt/${sessionId}`;
-    link.target = '_blank';
-    link.download = `receipt-${sessionId}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
+    setDownloading(true);
+    try {
+      const res = await fetch(`/api/receipt/${sessionId}`);
+      if (!res.ok) throw new Error('Failed to fetch receipt.');
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `receipt-${sessionId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('❌ Receipt download failed:', err);
+      alert('Unable to download receipt. Please try again later.');
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const { metadata, customer_email } = sessionData || {};
-  const {
-    'Customer Name': name,
-    'Shipping Address': address,
-    'Shipping Method': method,
-    'Total Paid': total,
-    'Order ID': orderId,
-  } = metadata || {};
+  const name = metadata?.['Customer Name'] || 'N/A';
+  const address = metadata?.['Shipping Address'] || 'N/A';
+  const method = metadata?.['Shipping Method'] || 'Standard Delivery';
+  const total = metadata?.['Total Paid'] || '0.00';
+  const orderId = metadata?.['Order ID'] || 'N/A';
 
   if (loading) {
     return (
@@ -73,69 +92,81 @@ const SuccessPage = () => {
   if (error || !sessionData) {
     return (
       <div className="min-h-screen flex items-center justify-center text-red-600 text-sm">
-        {error || 'Unable to load order details.'}
+        {error || 'Unable to load your order.'}
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-lightBg flex justify-center px-4 py-12">
-      <div className="w-full max-w-2xl bg-white shadow-md rounded-xl p-8">
-        <div className="text-center">
-          <CheckCircle className="mx-auto h-14 w-14 text-green-500" />
-          <h1 className="text-3xl font-heading font-bold text-primary mt-4">Thank you!</h1>
+    <div className="min-h-screen bg-lightBg flex justify-center items-center px-4 py-12">
+      <div className="w-full max-w-4xl bg-white shadow-md rounded-xl p-8">
+        {/* ✅ Header */}
+        <div className="text-center mb-10">
+          <CheckCircle className="mx-auto h-16 w-16 text-primary" />
+          <h1 className="text-3xl font-heading font-bold text-primary mt-4">
+            Thank you!
+          </h1>
           <p className="text-gray-700 mt-2">
-            Your order was successful. A confirmation email has been sent to:
+            Your order was successful. A confirmation has been sent to:
           </p>
-          <p className="text-sm font-medium text-darkText mt-1">{customer_email}</p>
-          {orderId && (
-            <p className="text-xs text-gray-500 mt-1">Order ID: {orderId}</p>
-          )}
+          <p className="text-darkText font-medium mt-1">{customer_email}</p>
+          <p className="text-xs text-gray-500 mt-1">Order ID: {orderId}</p>
         </div>
 
-        <hr className="my-6 border-gray-200" />
+        <hr className="border-gray-200 mb-10" />
 
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-primary flex items-center gap-2">
-            <Truck className="w-5 h-5" /> Order Summary
-          </h2>
-
-          <div className="flex items-start gap-2 text-sm text-gray-700">
-            <Truck className="w-4 h-4 mt-1 text-gray-500" />
-            <div>
-              <strong>Delivery:</strong> {method || 'Standard Delivery'}
-            </div>
+        {/* ✅ Summary Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm text-gray-700 mb-10">
+          <div>
+            <h2 className="text-base font-semibold text-primary flex items-center gap-2 mb-3">
+              <Truck className="w-5 h-5" /> Delivery Summary
+            </h2>
+            <p className="flex items-start gap-2 mb-3">
+              <Truck className="w-4 h-4 mt-1 text-gray-500" />
+              <span>
+                <strong>Delivery Method:</strong> {method}
+              </span>
+            </p>
+            <p className="flex items-start gap-2 mb-3">
+              <MapPin className="w-4 h-4 mt-1 text-gray-500" />
+              <span>
+                <strong>Address:</strong>
+                <br />
+                <span className="whitespace-pre-line">{address}</span>
+              </span>
+            </p>
+            <p className="flex items-center gap-2">
+              💰 <strong>Total Paid:</strong> £{total}
+            </p>
           </div>
 
-          <div className="flex items-start gap-2 text-sm text-gray-700">
-            <MapPin className="w-4 h-4 mt-1 text-gray-500" />
-            <div>
-              <strong>Address:</strong>
-              <div className="whitespace-pre-line">{address}</div>
-            </div>
+          <div>
+            <h2 className="text-base font-semibold text-primary flex items-center gap-2 mb-3">
+              <PackageSearch className="w-5 h-5" /> Products
+            </h2>
+            <p className="text-gray-600">
+              You will find itemized details in your receipt.
+            </p>
           </div>
-
-          {total && (
-            <div className="flex items-center gap-2 text-sm text-gray-700">
-              <span className="text-yellow-600 font-bold">£</span>
-              <strong>Total Paid:</strong> {total}
-            </div>
-          )}
         </div>
 
-        <div className="mt-8 flex flex-col sm:flex-row gap-4">
+        {/* ✅ Action Buttons */}
+        <div className="mt-6 flex flex-col sm:flex-row justify-center gap-4">
           <button
             onClick={() => router.push('/shop')}
             className="w-full sm:w-auto bg-gold hover:bg-yellow-400 text-black font-semibold py-2 px-6 rounded-lg shadow transition"
+            aria-label="Continue Shopping"
           >
             Continue Shopping
           </button>
           <button
             onClick={handleDownloadReceipt}
-            className="w-full sm:w-auto border-2 border-primary text-primary hover:bg-primary hover:text-white transition font-medium py-2 px-6 rounded-lg flex items-center gap-2"
+            disabled={downloading}
+            className="w-full sm:w-auto bg-primary hover:bg-teal-700 text-white font-medium py-2 px-6 rounded-lg flex items-center justify-center gap-2 transition disabled:opacity-50"
+            aria-label="Download Receipt"
           >
             <FileDown className="w-4 h-4" />
-            Download Receipt
+            {downloading ? 'Preparing...' : 'Download Receipt'}
           </button>
         </div>
       </div>

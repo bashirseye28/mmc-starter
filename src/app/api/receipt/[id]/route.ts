@@ -3,12 +3,19 @@ import Stripe from 'stripe';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+// ⚠️ Replace with your base64 logo (with full prefix: 'data:image/png;base64,...')
+const BASE64_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...'; // <-- REPLACE THIS
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: '2025-02-24.acacia',
 });
 
-// ✅ Base64 logo (replace this full string with yours)
-const MMC_LOGO_BASE64 = 'data:image/png;base64,...'; // full base64 string goes here
+type ReceiptItem = {
+  name: string;
+  quantity: number;
+  price: string;
+  total: string;
+};
 
 export async function GET(_: Request, { params }: { params: { id: string } }) {
   try {
@@ -26,18 +33,20 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
 
     const lineItems = (session as any).line_items?.data || [];
 
-    const items = lineItems
+    const items: ReceiptItem[] = lineItems
       .filter((item: any) => item.description !== 'Shipping')
-      .map((item: any) => {
+      .map((item: any): ReceiptItem => {
         const quantity = item.quantity || 1;
         const unitPrice = (item.price?.unit_amount || 0) / 100;
-        const product =
-          typeof item.price?.product === 'string'
-            ? item.description || 'Product'
-            : item.price?.product?.name || item.description || 'Product';
+
+        const product = item.price?.product;
+        const name =
+          typeof product === 'object' && product !== null && 'name' in product
+            ? (product as Stripe.Product).name
+            : item.description || 'Product';
 
         return {
-          name: product,
+          name,
           quantity,
           price: `£${unitPrice.toFixed(2)}`,
           total: `£${(unitPrice * quantity).toFixed(2)}`,
@@ -48,54 +57,58 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
     const shippingAddress = metadata['Shipping Address'] || 'N/A';
     const shippingCost = parseFloat(metadata['Shipping Cost'] || '0.00');
 
+    const now = new Date();
+    const formattedDate = now.toLocaleDateString('en-GB');
+    const formattedTime = now.toLocaleTimeString('en-GB');
+
+    // 🧾 PDF Generation
     const doc = new jsPDF();
 
-    // ✅ Header + Branding
-    if (MMC_LOGO_BASE64) {
-      doc.addImage(MMC_LOGO_BASE64, 'PNG', 15, 10, 30, 30);
+    // 🟢 Logo
+    if (BASE64_LOGO) {
+      doc.addImage(BASE64_LOGO, 'PNG', 15, 10, 30, 30);
     }
 
+    // 🟢 Header
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(18);
     doc.setTextColor(0, 118, 118);
     doc.text('Manchester Murid Community', 105, 20, { align: 'center' });
 
     doc.setFontSize(11);
-    doc.setTextColor(60);
+    doc.setTextColor(51, 51, 51);
     doc.text('Registered Charity No: 1194666', 105, 27, { align: 'center' });
 
-    // ✅ Customer Info
+    // 🟢 Info
     doc.setFontSize(10);
-    doc.setTextColor(30);
-    doc.text(`Receipt for Order: ${metadata['Order ID'] || 'N/A'}`, 15, 48);
-    doc.text(`Customer Name: ${metadata['Customer Name'] || 'N/A'}`, 15, 54);
-    doc.text(`Email: ${email}`, 15, 60);
+    doc.setTextColor(90);
+    doc.text(`Date: ${formattedDate}   Time: ${formattedTime}`, 15, 43);
 
-    // ✅ Items Table
+    doc.setTextColor(33);
+    doc.text(`Receipt for Order: ${metadata['Order ID'] || 'N/A'}`, 15, 51);
+    doc.text(`Customer Name: ${metadata['Customer Name'] || 'N/A'}`, 15, 57);
+    doc.text(`Email: ${email}`, 15, 63);
+
+    // 🟢 Item Table
     autoTable(doc, {
-      startY: 70,
-      head: [['Item Description', 'Qty', 'Unit Price', 'Subtotal']],
-      body: items.map((item: any) => [
+      startY: 72,
+      head: [['Item', 'Qty', 'Unit Price', 'Subtotal']],
+      body: items.map((item) => [
         item.name,
         String(item.quantity),
         item.price,
         item.total,
       ]),
       theme: 'grid',
+      headStyles: { fillColor: [0, 118, 118] },
       styles: { fontSize: 10 },
-      headStyles: {
-        fillColor: [0, 118, 118],
-        textColor: 255,
-        fontStyle: 'bold',
-      },
     });
 
-    const summaryStartY = (doc as any).lastAutoTable.finalY + 10;
+    const summaryStartY = (doc as any).lastAutoTable?.finalY || 100;
 
-    // ✅ Summary Section
+    // 🟢 Summary
     doc.setFontSize(10);
-    doc.setTextColor(30);
-
+    doc.setTextColor(50);
     doc.text('Shipping Method:', 15, summaryStartY);
     doc.text(shippingMethod, 60, summaryStartY);
 
@@ -110,7 +123,7 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
     doc.text('Total Paid:', 15, summaryStartY + 20);
     doc.text(`£${amountPaid.toFixed(2)}`, 60, summaryStartY + 20);
 
-    // ✅ Footer
+    // 🟢 Footer
     doc.setFontSize(12);
     doc.setTextColor(0, 118, 118);
     doc.text(
@@ -120,7 +133,9 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
       { align: 'center' }
     );
 
+    // 🟢 Return as downloadable file
     const pdfBuffer = doc.output('arraybuffer');
+
     return new Response(Buffer.from(pdfBuffer), {
       headers: {
         'Content-Type': 'application/pdf',
