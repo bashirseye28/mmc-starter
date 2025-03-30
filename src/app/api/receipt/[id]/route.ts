@@ -17,9 +17,11 @@ type ReceiptItem = {
   total: string;
 };
 
-// ✅ Fix: use `context: any` to avoid invalid export type error
-export async function GET(req: NextRequest, context: any) {
-  const { id } = context.params;
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const { id } = params;
 
   try {
     const session = await stripe.checkout.sessions.retrieve(id, {
