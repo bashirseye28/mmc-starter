@@ -35,9 +35,10 @@ const ProductGrid: React.FC<ProductGridProps> = ({ category, openCart }) => {
           ...doc.data(),
         })) as Product[];
 
-        const filtered = category === "All"
-          ? productList
-          : productList.filter((p) => p.category === category);
+        const filtered =
+          category === "All"
+            ? productList
+            : productList.filter((p) => p.category === category);
 
         setAllProducts(filtered);
         setVisibleCount(PAGE_SIZE); // Reset visible count on category change
@@ -62,13 +63,17 @@ const ProductGrid: React.FC<ProductGridProps> = ({ category, openCart }) => {
 
   return (
     <section className="py-12 container mx-auto px-6" id="products">
-      <h2 className="text-3xl font-bold text-primary text-center">Our Products</h2>
+      <h2 className="text-3xl font-bold text-primary text-center">
+        Our Products
+      </h2>
       <p className="text-gray-600 text-center mt-2">
         Explore our high-quality items available for purchase.
       </p>
 
       {loading ? (
-        <div className="text-center py-10 text-primary text-lg font-medium">Loading products...</div>
+        <div className="text-center py-10 text-primary text-lg font-medium">
+          Loading products...
+        </div>
       ) : error ? (
         <div className="text-center py-10 text-red-600 text-lg">{error}</div>
       ) : visibleProducts.length === 0 ? (
@@ -82,41 +87,45 @@ const ProductGrid: React.FC<ProductGridProps> = ({ category, openCart }) => {
             {visibleProducts.map((product) => (
               <div
                 key={product.id}
-                className="bg-white border rounded-lg shadow-md p-4 hover:shadow-xl transition transform hover:-translate-y-1"
+                className="bg-white shadow-lg rounded-xl overflow-hidden transition duration-300 hover:shadow-2xl hover:-translate-y-2"
               >
-                {/* Image */}
-                <div className="relative w-full h-48 mb-3">
+                {/* ✅ Updated Image style */}
+                <div className="relative w-full h-56">
                   {product.image ? (
                     <Image
                       src={product.image}
                       alt={product.name}
-                      layout="fill"
-                      objectFit="contain"
-                      className="rounded-md"
+                      width={400}
+                      height={300}
+                      className="rounded-t-xl object-cover w-full h-full"
+                      priority
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
+                    <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400 rounded-t-xl">
                       No Image
                     </div>
                   )}
                 </div>
 
-                {/* Info */}
-                <h3 className="text-lg font-semibold text-primary">{product.name}</h3>
-                <p className="text-gray-600 mt-1">{formatPrice(product.price)}</p>
+                {/* ✅ Content */}
+                <div className="p-5 flex flex-col h-full">
+                  <h3 className="text-lg font-bold text-primary">{product.name}</h3>
+                  <p className="text-gray-600 mt-1">{formatPrice(product.price)}</p>
 
-                {/* Add to Cart */}
-                <button
-                  onClick={() => {
-                    addToCart({ ...product, quantity: 1 });
-                    openCart();
-                  }}
-                  className="mt-4 w-full bg-gold text-black py-2 rounded-lg flex items-center justify-center gap-2 font-medium hover:bg-yellow-500 transition"
-                  aria-label={`Add ${product.name} to cart`}
-                >
-                  <FontAwesomeIcon icon={faShoppingCart} />
-                  Add to Cart
-                </button>
+                  <div className="mt-4">
+                    <button
+                      onClick={() => {
+                        addToCart({ ...product, quantity: 1 });
+                        openCart();
+                      }}
+                      className="w-full bg-gold text-black font-semibold py-2 rounded-md flex items-center justify-center gap-2 hover:bg-yellow-500 transition"
+                      aria-label={`Add ${product.name} to cart`}
+                    >
+                      <FontAwesomeIcon icon={faShoppingCart} />
+                      Add to Cart
+                    </button>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
