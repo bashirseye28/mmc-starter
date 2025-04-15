@@ -67,32 +67,6 @@ export default function SuccessPage() {
     fetchDonationDetails();
   }, [sessionId]);
 
-  // ✅ Generate & Download PDF Receipt
-  // const generatePDF = () => {
-  //   const doc = new jsPDF();
-  //   doc.setFont("helvetica", "bold");
-  //   doc.setFontSize(22);
-  //   doc.text("Donation Receipt", 20, 20);
-  //   doc.setFontSize(14);
-  //   doc.setFont("helvetica", "normal");
-
-  //   // ✅ Donation Details
-  //   doc.text(`Donor Name: ${donationDetails.donorName}`, 20, 40);
-  //   doc.text(`Donor Email: ${donationDetails.donorEmail}`, 20, 50);
-  //   doc.text(`Donation Amount: £${donationDetails.amount}`, 20, 60);
-  //   doc.text(`Donation Frequency: ${donationDetails.frequency}`, 20, 70);
-  //   doc.text(`Payment Method: ${donationDetails.method}`, 20, 80);
-  //   doc.text(`Date: ${donationDetails.date}`, 20, 90);
-
-  //   // ✅ Footer
-  //   doc.setFontSize(12);
-  //   doc.text("Thank you for your generous donation!", 20, 110);
-  //   doc.text("Manchester Murid Community", 20, 120);
-
-  //   // ✅ Save PDF
-  //   doc.save("Donation_Receipt.pdf");
-  // };
-
   const generatePDF = () => {
     const doc = new jsPDF();
     const logoUrl = "https://res.cloudinary.com/dnmoy5wua/image/upload/v1742051469/logo_ys5gk6.png"; // ✅ Update with actual MMC logo path
