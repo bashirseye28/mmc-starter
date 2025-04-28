@@ -1,10 +1,12 @@
-import { Suspense } from 'react';
-import SuccessPage from './SuccessPage';
+'use client';
 
-export default function CheckoutSuccessWrapper() {
+import { Suspense } from 'react';
+import SuccessPageContent from './SuccessPageContent';
+
+export default function SuccessPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-primary">Loading...</div>}>
-      <SuccessPage />
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-primary text-sm">Loading your order...</div>}>
+      <SuccessPageContent />
     </Suspense>
   );
 }

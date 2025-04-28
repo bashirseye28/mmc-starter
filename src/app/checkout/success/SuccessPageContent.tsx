@@ -2,15 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import {
-  CheckCircle,
-  Truck,
-  MapPin,
-  PackageSearch,
-  FileDown,
-} from 'lucide-react';
+import { CheckCircle, Truck, MapPin, PackageSearch, FileDown } from 'lucide-react';
 
-const SuccessPage = () => {
+const SuccessPageContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('session_id');
@@ -174,4 +168,4 @@ const SuccessPage = () => {
   );
 };
 
-export default SuccessPage;
+export default SuccessPageContent;
