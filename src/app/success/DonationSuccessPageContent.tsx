@@ -1,6 +1,6 @@
 'use client';
 
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -17,10 +17,8 @@ import {
 import jsPDF from "jspdf";
 import Confetti from "react-confetti";
 
-function DonationSuccessPageContent() {
-  const searchParams = useSearchParams();
+function DonationSuccessPageContent({ sessionId }: { sessionId?: string }) {
   const router = useRouter();
-  const sessionId = searchParams.get("session_id");
 
   const [donationDetails, setDonationDetails] = useState({
     amount: 0,
@@ -81,7 +79,6 @@ function DonationSuccessPageContent() {
     doc.setFont("helvetica", "italic");
     doc.text("Thank you for your generous donation!", 20, 130);
     doc.text("Manchester Murid Community", 20, 140);
-
     doc.setFont("helvetica", "normal");
     doc.text("info@manchestermuridcommunity.org", 20, 160);
     doc.text("+44 7541 475 547", 20, 170);
