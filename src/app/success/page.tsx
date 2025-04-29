@@ -20,9 +20,11 @@ import Confetti from 'react-confetti';
 export default function SuccessPage({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | undefined };
+  searchParams: Record<string, string | string[] | undefined>;
 }) {
-  const sessionId = searchParams.session_id;
+  const sessionId =
+    typeof searchParams.session_id === 'string' ? searchParams.session_id : undefined;
+
   const router = useRouter();
 
   const [donationDetails, setDonationDetails] = useState({
