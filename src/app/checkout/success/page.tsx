@@ -5,10 +5,8 @@ import { useRouter } from 'next/navigation';
 import { CheckCircle, Truck, MapPin, PackageSearch, FileDown } from 'lucide-react';
 
 export default function SuccessPage({
-  params,
   searchParams,
 }: {
-  params: Record<string, string>;
   searchParams: Record<string, string | string[] | undefined>;
 }) {
   const router = useRouter();
