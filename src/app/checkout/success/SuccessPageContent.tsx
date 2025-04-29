@@ -94,7 +94,7 @@ const SuccessPageContent = () => {
   return (
     <div className="min-h-screen bg-lightBg flex justify-center items-center px-4 py-12">
       <div className="w-full max-w-4xl bg-white shadow-md rounded-xl p-8">
-        {/* ✅ Header */}
+        {/* Header */}
         <div className="text-center mb-10">
           <CheckCircle className="mx-auto h-16 w-16 text-primary" />
           <h1 className="text-3xl font-heading font-bold text-primary mt-4">
@@ -109,7 +109,7 @@ const SuccessPageContent = () => {
 
         <hr className="border-gray-200 mb-10" />
 
-        {/* ✅ Summary Section */}
+        {/* Summary Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm text-gray-700 mb-10">
           <div>
             <h2 className="text-base font-semibold text-primary flex items-center gap-2 mb-3">
@@ -144,7 +144,7 @@ const SuccessPageContent = () => {
           </div>
         </div>
 
-        {/* ✅ Action Buttons */}
+        {/* Action Buttons */}
         <div className="mt-6 flex flex-col sm:flex-row justify-center gap-4">
           <button
             onClick={() => router.push('/shop')}
