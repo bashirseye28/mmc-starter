@@ -5,12 +5,15 @@ import { useRouter } from 'next/navigation';
 import { CheckCircle, Truck, MapPin, PackageSearch, FileDown } from 'lucide-react';
 
 export default function SuccessPage({
+  params,
   searchParams,
 }: {
+  params: Record<string, string>;
   searchParams: Record<string, string | string[] | undefined>;
 }) {
   const router = useRouter();
-  const sessionId = typeof searchParams.session_id === 'string' ? searchParams.session_id : undefined;
+  const sessionId =
+    typeof searchParams.session_id === 'string' ? searchParams.session_id : undefined;
 
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
@@ -142,7 +145,7 @@ export default function SuccessPage({
               <PackageSearch className="w-5 h-5" /> Products
             </h2>
             <p className="text-gray-600">
-              You will find itemised details in your receipt.
+              You will find itemized details in your receipt.
             </p>
           </div>
         </div>
