@@ -1,16 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle, Truck, MapPin, PackageSearch, FileDown } from 'lucide-react';
 
-export default function SuccessPage({
-  searchParams,
-}: {
-  searchParams: Record<string, string | string[] | undefined>;
-}) {
+export default function SuccessPage() {
   const router = useRouter();
-  const sessionId = typeof searchParams.session_id === 'string' ? searchParams.session_id : undefined;
+  const searchParams = useSearchParams();
+  const sessionId = searchParams.get('session_id');
 
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
@@ -71,7 +68,6 @@ export default function SuccessPage({
   };
 
   const { metadata, customer_email } = sessionData || {};
-  const name = metadata?.['Customer Name'] || 'N/A';
   const address = metadata?.['Shipping Address'] || 'N/A';
   const method = metadata?.['Shipping Method'] || 'Standard Delivery';
   const total = metadata?.['Total Paid'] || '0.00';
@@ -98,9 +94,7 @@ export default function SuccessPage({
       <div className="w-full max-w-4xl bg-white shadow-md rounded-xl p-8">
         <div className="text-center mb-10">
           <CheckCircle className="mx-auto h-16 w-16 text-primary" />
-          <h1 className="text-3xl font-bold text-primary mt-4">
-            Thank you!
-          </h1>
+          <h1 className="text-3xl font-bold text-primary mt-4">Thank you!</h1>
           <p className="text-gray-700 mt-2">
             Your order was successful. A confirmation has been sent to:
           </p>

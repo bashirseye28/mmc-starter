@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -17,15 +17,10 @@ import {
 import jsPDF from 'jspdf';
 import Confetti from 'react-confetti';
 
-export default function SuccessPage({
-  params,
-  searchParams,
-}: {
-  params: Record<string, string>;
-  searchParams: Record<string, string | string[] | undefined>;
-}) {
+export default function SuccessPage() {
   const router = useRouter();
-  const sessionId = typeof searchParams.session_id === 'string' ? searchParams.session_id : undefined;
+  const searchParams = useSearchParams();
+  const sessionId = searchParams.get('session_id');
 
   const [donationDetails, setDonationDetails] = useState({
     amount: 0,
@@ -100,7 +95,95 @@ export default function SuccessPage({
       <Confetti recycle={false} numberOfPieces={300} />
 
       <div className="bg-white shadow-xl p-10 rounded-lg text-center max-w-lg border border-gray-200">
-        {/* Your donation success page content */}
+        <motion.div
+          initial={{ scale: 0.5, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
+          className="text-primary"
+        >
+          <FontAwesomeIcon icon={faCheckCircle} className="text-6xl" />
+        </motion.div>
+
+        <h2 className="text-3xl font-bold text-primary mt-4">
+          Thank You for Your <span className="text-gold">Generosity!</span>
+        </h2>
+        <p className="text-gray-600 mt-2">
+          Your donation is making a real difference. We deeply appreciate your support!
+        </p>
+
+        <motion.div
+          className="mt-6 bg-white p-5 rounded-lg border shadow-lg"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+        >
+          <h3 className="text-xl font-semibold text-primary text-center">
+            <span className="text-gold">Donation</span> Summary
+          </h3>
+
+          <div className="mt-3 space-y-3">
+            <p className="text-lg font-semibold text-primary flex items-center gap-2">
+              <FontAwesomeIcon icon={faUser} className="text-gold" />
+              Donor: <span className="text-darkText">{donationDetails.donorName}</span>
+            </p>
+            <p className="text-lg font-semibold text-primary flex items-center gap-2">
+              <FontAwesomeIcon icon={faEnvelope} className="text-gold" />
+              Email: <span className="text-darkText">{donationDetails.donorEmail}</span>
+            </p>
+            <p className="text-lg font-semibold text-primary flex items-center gap-2">
+              <FontAwesomeIcon icon={faMoneyBillWave} className="text-gold" />
+              Amount: <span className="text-primary font-bold">£{donationDetails.amount}</span>
+            </p>
+            <p className="text-lg font-semibold text-primary flex items-center gap-2">
+              <FontAwesomeIcon icon={faCalendarAlt} className="text-gold" />
+              Frequency: <span className="text-darkText">{donationDetails.frequency}</span>
+            </p>
+            <p className="text-lg font-semibold text-primary flex items-center gap-2">
+              Payment Method: <span className="text-darkText capitalize">{donationDetails.method}</span>
+            </p>
+            <p className="text-lg font-semibold text-primary flex items-center gap-2">
+              Date: <span className="text-darkText">{donationDetails.date}</span>
+            </p>
+          </div>
+        </motion.div>
+
+        <motion.div
+          className="mt-6 flex justify-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.5 }}
+        >
+          <button
+            onClick={generatePDF}
+            className="px-6 py-3 bg-gray-700 text-white font-semibold rounded-lg shadow-md hover:bg-gray-900 transition flex items-center justify-center gap-2"
+          >
+            <FontAwesomeIcon icon={faFilePdf} />
+            Download Receipt (PDF)
+          </button>
+        </motion.div>
+
+        <motion.div
+          className="mt-6 flex flex-col sm:flex-row justify-center gap-4"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.5 }}
+        >
+          <button
+            onClick={() => router.push('/')}
+            className="px-6 py-3 bg-primary text-white font-semibold rounded-lg shadow-md hover:bg-darkPrimary transition flex items-center justify-center gap-2"
+          >
+            <FontAwesomeIcon icon={faArrowLeft} />
+            Return to Homepage
+          </button>
+
+          <button
+            onClick={() => router.push('/donate')}
+            className="px-6 py-3 bg-gold text-black font-semibold rounded-lg shadow-md hover:bg-[#d4af37] transition flex items-center justify-center gap-2"
+          >
+            Donate Again
+            <FontAwesomeIcon icon={faArrowRight} />
+          </button>
+        </motion.div>
       </div>
     </main>
   );
