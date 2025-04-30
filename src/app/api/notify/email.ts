@@ -32,7 +32,7 @@ export async function POST(req: Request) {
             .map((item: any) => `<li>${item.name} x${item.quantity} - £${item.price}</li>`)
             .join("")}
         </ul>
-        <p><a href="http://localhost:3000/admin/orders">View Order</a></p>
+        <p><a href="https://www.manchestermuridcommunity.org/admin/orders">View Order</a></p>
       `,
     };
 

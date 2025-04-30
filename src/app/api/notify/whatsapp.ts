@@ -31,7 +31,7 @@ export async function POST(req: Request) {
 
     const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
 
-    const adminLink = ADMIN_ORDER_LINK || "http://localhost:3000/admin/orders";
+    const adminLink = ADMIN_ORDER_LINK || "https://www.manchestermuridcommunity.org/admin/orders";
 
     // ✅ Construct WhatsApp message
     const message = `
