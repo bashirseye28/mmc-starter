@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -17,17 +17,10 @@ import {
 import jsPDF from 'jspdf';
 import Confetti from 'react-confetti';
 
-export default function SuccessPage({
-  params,
-  searchParams,
-}: {
-  params: Record<string, string>;
-  searchParams: Record<string, string | string[] | undefined>;
-}) {
-  const sessionId =
-    typeof searchParams.session_id === 'string' ? searchParams.session_id : undefined;
-
+export default function SuccessPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const sessionId = searchParams.get('session_id');
 
   const [donationDetails, setDonationDetails] = useState({
     amount: 0,
@@ -39,9 +32,9 @@ export default function SuccessPage({
   });
 
   useEffect(() => {
-    const fetchDonationDetails = async () => {
-      if (!sessionId) return;
+    if (!sessionId) return;
 
+    const fetchDonationDetails = async () => {
       try {
         const response = await fetch(`/api/stripe/session?session_id=${sessionId}`);
         const data = await response.json();
@@ -68,8 +61,7 @@ export default function SuccessPage({
 
   const generatePDF = () => {
     const doc = new jsPDF();
-    const logoUrl =
-      'https://res.cloudinary.com/dnmoy5wua/image/upload/v1742051469/logo_ys5gk6.png';
+    const logoUrl = 'https://res.cloudinary.com/dnmoy5wua/image/upload/v1742051469/logo_ys5gk6.png';
 
     doc.addImage(logoUrl, 'PNG', 80, 10, 50, 20);
     doc.setFont('helvetica', 'bold');
@@ -101,7 +93,6 @@ export default function SuccessPage({
   return (
     <main className="min-h-screen flex items-center justify-center bg-gray-50 px-6 relative">
       <Confetti recycle={false} numberOfPieces={300} />
-
       <div className="bg-white shadow-xl p-10 rounded-lg text-center max-w-lg border border-gray-200">
         <motion.div
           initial={{ scale: 0.5, opacity: 0 }}
@@ -183,7 +174,6 @@ export default function SuccessPage({
             <FontAwesomeIcon icon={faArrowLeft} />
             Return to Homepage
           </button>
-
           <button
             onClick={() => router.push('/donate')}
             className="px-6 py-3 bg-gold text-black font-semibold rounded-lg shadow-md hover:bg-[#d4af37] transition flex items-center justify-center gap-2"
