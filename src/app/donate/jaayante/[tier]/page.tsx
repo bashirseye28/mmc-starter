@@ -49,6 +49,7 @@ const JaayanteDonationPage = () => {
           donorName: anonymous ? "Anonymous" : donorName,
           email: anonymous ? "anonymous@donation.com" : email,
           isAnonymous: anonymous,
+          amount: selectedTier.amount, // ✅ ✅ ✅ ADDED THIS
         }),
       });
 
