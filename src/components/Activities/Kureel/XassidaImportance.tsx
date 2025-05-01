@@ -21,12 +21,12 @@ const XassidaImportance = () => {
           transition={{ duration: 1 }}
         >
           <h2 className="text-4xl font-bold text-primary font-heading mb-4">
-            The Spiritual Power of <span className="text-gold">Qassida</span>
+            The Spiritual Power of <span className="text-gold">Qasida</span>
           </h2>
           <p className="text-lg text-darkText font-body max-w-3xl mx-auto leading-relaxed">
             Sheikh Ahmadou Bamba&rsquo;s written works, commonly referred to as{" "}
             <span className="text-primary">
-              &quot;Qasidas&quot; (poems) or &quot;Khassaides&quot;
+              &quot;Qasidas&quot; (poems) or &quot;Xassidas&quot;
             </span>
             , represent a central pillar of the{" "}
             <strong>spiritual, literary, and intellectual identity</strong> of
@@ -46,7 +46,7 @@ const XassidaImportance = () => {
             <span className="text-primary">
               &quot;Journées Khassaides&quot; (Khassaide Days)
             </span>
-            —dedicated events where Xassida recitation takes center stage,
+            —dedicated events where Qasida recitation takes center stage,
             ensuring the{" "}
             <strong>continuous transmission of this rich heritage</strong>.
           </p>
@@ -63,7 +63,7 @@ const XassidaImportance = () => {
             {
               icon: faHandsPraying,
               title: "Deepens Faith",
-              desc: "Xassida recitations instill love for Allah and His Messenger, guiding the soul toward righteousness.",
+              desc: "Qasida recitations instill love for Allah and His Messenger, guiding the soul toward righteousness.",
             },
             {
               icon: faBookOpen,
@@ -73,7 +73,7 @@ const XassidaImportance = () => {
             {
               icon: faHeart,
               title: "Blessings & Healing",
-              desc: "The rhythmic chanting of Xassida is known to bring peace, tranquility, and divine baraka (blessings).",
+              desc: "The rhythmic chanting of Qasida is known to bring peace, tranquility, and divine baraka (blessings).",
             },
             {
               icon: faUsers,
@@ -123,7 +123,7 @@ const XassidaImportance = () => {
         >
           <Link href="/library">
             <button className="px-8 py-4 bg-gold text-black font-semibold text-lg rounded-lg hover:bg-[#e6b800] transition shadow-md">
-              Explore More Qassida Teachings →
+              Explore More Qasida Teachings →
             </button>
           </Link>
         </motion.div>

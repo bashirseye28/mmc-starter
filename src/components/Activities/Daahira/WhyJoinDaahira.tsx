@@ -14,7 +14,7 @@ const fadeIn = {
 
 // 🔹 List of Features
 const features = [
-  { icon: faBookOpen, title: "Qur’an & Xassida Recitations", description: "Strengthen faith through sacred verses and Sheikh Ahmadou Bamba’s teachings." },
+  { icon: faBookOpen, title: "Qur’an & Qasida Recitations", description: "Strengthen faith through sacred verses and Sheikh Ahmadou Bamba’s teachings." },
   { icon: faHandsPraying, title: "Group Dhikr", description: "A collective remembrance of Allah, bringing peace to the heart and mind." },
   { icon: faUsers, title: "Islamic Discussions", description: "Deepen knowledge with reflections on Islamic teachings and Muridiyya history." },
   { icon: faHandHoldingHeart, title: "Brotherhood & Community", description: "Build lifelong bonds with fellow Murids in a nurturing environment." },

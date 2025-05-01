@@ -17,7 +17,7 @@ const KureelImportance = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1 }}
         >
-          The Timeless Wisdom of Sheikh Ahmadou Bamba’s <span className="text-gold">Qassida</span>
+          The Timeless Wisdom of Sheikh Ahmadou Bamba’s <span className="text-gold">Qasida</span>
         </motion.h2>
         <motion.p 
           className="text-lg text-darkText font-body max-w-3xl mx-auto mb-12"
@@ -25,7 +25,7 @@ const KureelImportance = () => {
           animate={{ opacity: 1 }}
           transition={{ duration: 1.2, delay: 0.3 }}
         >
-          The Qassida poems carry profound spiritual guidance, offering wisdom, devotion, and a path 
+          The Qasida poems carry profound spiritual guidance, offering wisdom, devotion, and a path 
           to enlightenment for generations of Murids worldwide.
         </motion.p>
 
@@ -58,7 +58,7 @@ const KureelImportance = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 1, delay: 0.5 }}
         >
-          "Through the rhythm of Qassida, our voices unite in devotion, strengthening our hearts in faith."
+          "Through the rhythm of Qasida, our voices unite in devotion, strengthening our hearts in faith."
         </motion.div>
 
         {/* ✅ CTA Buttons */}
@@ -70,7 +70,7 @@ const KureelImportance = () => {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.8, delay: 0.8 }}
             >
-              Read Qassidas →
+              Read Qasidas →
             </motion.button>
           </Link>
           <Link href="/activities/kureel#schedule">

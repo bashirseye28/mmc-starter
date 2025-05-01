@@ -36,7 +36,7 @@ const DaahiraIntro = () => {
           {/* ✅ Key Features - Grid Layout */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {[
-              { icon: faBookQuran, text: "Qur'an & Xassida Recitations" },
+              { icon: faBookQuran, text: "Qur'an & Qasida Recitations" },
               { icon: faPrayingHands, text: "Group Dhikr & Praise" },
               { icon: faUsers, text: "Community & Brotherhood" },
               { icon: faUtensils, text: "Sharing a Meal Together" },

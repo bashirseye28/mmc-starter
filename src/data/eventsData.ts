@@ -64,12 +64,12 @@ export const events: Event[] = [
   },
   {
     id: 5,
-    name: "Bisu Xassida",
+    name: "Bisu Qasida",
     date: "2025-12-24T00:00:00",
     time: "Wednesday, December 24, 2025",
     location: "MMC Centre",
     description:
-      "Annual gathering for the collective recitation and celebration of Xassida.",
+      "Annual gathering for the collective recitation and celebration of Qasida.",
     image: "/images/events-hero.webp.webp",
     rsvp: true,
     category: "Spiritual",

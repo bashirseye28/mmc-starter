@@ -11,13 +11,13 @@ export const activities: Activity[] = [
   {
     id: 1,
     title: "Weekly Daahira",
-    description: "A space for collective worship, Xassida recitations, and discussions on Islamic teachings to strengthen faith and unity.",
+    description: "A space for collective worship, Qasida recitations, and discussions on Islamic teachings to strengthen faith and unity.",
     image: "/images/gathering.png",
     link: "/activities/daahira",
   },
   {
     id: 2,
-    title: "Kureel Xassida",
+    title: "Kureel Qasida",
     description: "Preserving the Murid tradition through rhythmic group recitations of Sheikh Ahmadou Bamba’s poetic works.",
     image: "/images/kurel.png",
     link: "/activities/kureel",

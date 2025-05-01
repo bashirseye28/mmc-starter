@@ -14,7 +14,7 @@ const focusAreas = [
   {
     title: "Spiritual Growth",
     description:
-      "Strengthening faith through weekly Daahira gatherings, Xassida recitations, and Islamic discussions.",
+      "Strengthening faith through weekly Daahira gatherings, Qasida recitations, and Islamic discussions.",
     icon: faMosque,
   },
   {

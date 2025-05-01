@@ -1,7 +1,5 @@
-// File: src/app/api/checkout-session/route.ts
-
-import { NextRequest } from "next/server";
-import Stripe from "stripe";
+import { NextRequest } from 'next/server';
+import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: "2025-02-24.acacia",
@@ -13,34 +11,36 @@ export async function POST(request: NextRequest) {
     const { amount, frequency, method } = body;
 
     if (!amount || !method) {
-      return new Response(JSON.stringify({ error: "Missing required parameters" }), {
+      return new Response(JSON.stringify({ error: 'Missing required parameters' }), {
         status: 400,
       });
     }
 
     const paymentMethodMapping: Record<string, Stripe.Checkout.SessionCreateParams.PaymentMethodType[]> = {
-      creditCard: ["card"],
-      googlePay: ["card"],
-      applePay: ["card"],
-      paypal: ["paypal"], // note: PayPal support may require special handling
+      creditCard: ['card'],
+      googlePay: ['card'],
+      applePay: ['card'],
+      paypal: ['paypal'], // Note: May need to be added to Stripe Dashboard settings
     };
 
-    const intervalMapping: Record<string, "day" | "week" | "month" | "year"> = {
-      daily: "day",
-      weekly: "week",
-      monthly: "month",
-      yearly: "year",
+    const intervalMapping: Record<string, 'day' | 'week' | 'month' | 'year'> = {
+      daily: 'day',
+      weekly: 'week',
+      monthly: 'month',
+      yearly: 'year',
     };
 
     const recurringInterval = intervalMapping[frequency] || undefined;
 
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.manchestermuridcommunity.org';
+
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: paymentMethodMapping[method] || ["card"],
-      mode: frequency === "one-time" ? "payment" : "subscription",
+      payment_method_types: paymentMethodMapping[method] || ['card'],
+      mode: frequency === 'one-time' ? 'payment' : 'subscription',
       line_items: [
         {
           price_data: {
-            currency: "gbp",
+            currency: 'gbp',
             product_data: {
               name: `Donation (${frequency})`,
             },
@@ -50,18 +50,19 @@ export async function POST(request: NextRequest) {
           quantity: 1,
         },
       ],
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/donate`,
+      success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/donate`,
     });
 
     return new Response(JSON.stringify({ url: session.url }), {
       status: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   } catch (error: any) {
-    console.error("Stripe error:", error);
-    return new Response(JSON.stringify({ error: error.message || "Failed to create Stripe session" }), {
+    console.error('Stripe error:', error);
+    return new Response(JSON.stringify({ error: error.message || 'Failed to create Stripe session' }), {
       status: 500,
     });
   }
 }
+

@@ -13,10 +13,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid donation details" }, { status: 400 });
     }
 
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://manchestermuridcommunity.org";
+
     let session;
 
     if (jaayanteTier) {
-      // ✅ Jaayante Tier Donation (Fixed Price ID from Stripe)
+      // ✅ Fixed tier pricing via Stripe price IDs
       const jaayantePriceMap: Record<string, string | undefined> = {
         sindiidi: process.env.PRICE_SINDIIDI,
         wakaana: process.env.PRICE_WAKAANA,
@@ -35,11 +37,11 @@ export async function POST(req: NextRequest) {
         payment_method_types: ["card"],
         mode: "payment",
         line_items: [{ price: priceId, quantity: 1 }],
-        success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/donate/jaayante/${jaayanteTier}?canceled=true`,
+        success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${baseUrl}/donate/jaayante/${jaayanteTier}?canceled=true`,
       });
     } else {
-      // ✅ Handle One-Time or Recurring Donations
+      // ✅ One-time donation with custom amount
       session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
         mode: "payment",
@@ -47,20 +49,25 @@ export async function POST(req: NextRequest) {
           {
             price_data: {
               currency: "gbp",
-              product_data: { name: "One-Time Donation" },
-              unit_amount: Number(amount) * 100,
+              product_data: {
+                name: frequency ? `Donation (${frequency})` : "Donation",
+              },
+              unit_amount: Math.round(Number(amount) * 100),
             },
             quantity: 1,
           },
         ],
-        success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/donate?canceled=true`,
+        success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${baseUrl}/donate?canceled=true`,
       });
     }
 
     return NextResponse.json({ sessionId: session.id, url: session.url });
-  } catch (error) {
-    console.error("Stripe Checkout Error:", error);
-    return NextResponse.json({ error: "Stripe session creation failed" }, { status: 500 });
+  } catch (error: any) {
+    console.error("❌ Stripe Checkout Error:", error);
+    return NextResponse.json(
+      { error: error?.message || "Stripe session creation failed" },
+      { status: 500 }
+    );
   }
 }

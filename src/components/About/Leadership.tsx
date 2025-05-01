@@ -39,7 +39,7 @@ const teamMembers = [
     role: "General Secretary",
     responsibilities: [
       "Manages records and communications",
-      "Organizes internal coordination",
+      "Organises internal coordination",
       "Handles official correspondence",
     ],
     image: "/images/me.png",
@@ -59,16 +59,16 @@ const teamMembers = [
     role: "Education & Cultural",
     responsibilities: [
       "Manages Madrassah & Islamic studies",
-      "Organizes Xassida chanting sessions",
+      "Organises Qasida chanting sessions",
       "Promotes Murid teachings",
     ],
     image: "/images/me.png",
   },
   {
-    name: "Baay Xassida",
+    name: "Baay Qasida",
     role: "Organisation Committee",
     responsibilities: [
-      "Organizes community gatherings",
+      "Organises community gatherings",
       "Handles logistics and events",
       "Ensures smooth execution of MMC activities",
     ],
@@ -98,7 +98,7 @@ const teamMembers = [
     name: "TBC",
     role: "Social & Welfare",
     responsibilities: [
-      "Organizes food distribution & aid",
+      "Organises food distribution & aid",
       "Implements well-being initiatives",
       "Supports vulnerable community members",
     ],

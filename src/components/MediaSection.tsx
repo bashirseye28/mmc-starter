@@ -23,7 +23,7 @@ const MediaSection: React.FC<MediaSectionProps> = ({ videos, audios, images }) =
   return (
     <section className="max-w-7xl mx-auto py-16 px-6">
       <h2 className="text-3xl font-bold text-primary text-center">
-        Kureel Qassida Media Library
+        Kureel Qasida Media Library
       </h2>
 
       {/* Tab Navigation */}

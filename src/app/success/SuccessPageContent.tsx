@@ -36,18 +36,18 @@ export default function SuccessPageContent() {
 
     const fetchDonationDetails = async () => {
       try {
-        const response = await fetch(`/api/stripe/session?session_id=${sessionId}`);
+        const response = await fetch(`/api/daahira/donate?session_id=${sessionId}`);
         const data = await response.json();
 
         if (response.ok) {
-          setDonationDetails({
-            amount: data.amount_total ? parseFloat(data.amount_total) : 0,
-            frequency: data.frequency || 'One-time',
-            method: data.payment_method_types || 'Card',
-            donorName: data.donor_name || 'Anonymous',
-            donorEmail: data.donor_email || 'Not Provided',
-            date: new Date().toLocaleDateString(),
-          });
+            setDonationDetails({
+                amount: parseFloat(data.donation_amount || '0'),
+                frequency: data.donation_frequency || 'One-time',
+                method: data.payment_method_types || 'Card',
+                donorName: data.donor_name || 'Anonymous',
+                donorEmail: data.donor_email || 'Not Provided',
+                date: new Date().toLocaleDateString(),
+              });
         } else {
           console.error('Failed to fetch donation details:', data.error);
         }

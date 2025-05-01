@@ -18,10 +18,10 @@ const KureelIntro = () => {
           transition={{ duration: 1 }}
         >
           <h2 className="text-4xl font-bold text-primary font-heading">
-            What is <span className="text-gold">Kureel Xassida?</span>
+            What is <span className="text-gold">Kureel Qasida?</span>
           </h2>
           <p className="text-lg text-darkText font-body leading-relaxed">
-            Kureel Xassida is a sacred practice within the Murid community where believers gather 
+            Kureel Qasida is a sacred practice within the Murid community where believers gather 
             to chant the poetic works of Sheikh Ahmadou Bamba. Through 
             <strong className="text-primary"> rhythmic recitation</strong>, participants connect deeply with their faith, 
             preserving a rich spiritual tradition.
@@ -49,7 +49,7 @@ const KureelIntro = () => {
 
           {/* ✅ Quote Box */}
           <div className="border-l-4 border-gold pl-4 italic text-darkText font-body text-lg bg-white p-4 rounded-xl shadow-md">
-            "Through the rhythm of Xassida, our voices unite in devotion, strengthening our hearts in faith."
+            "Through the rhythm of Qasida, our voices unite in devotion, strengthening our hearts in faith."
           </div>
         </motion.div>
 
@@ -62,7 +62,7 @@ const KureelIntro = () => {
         >
           <Image
             src="/images/kureel-hero.jpg"
-            alt="Kureel Xassida Chanting"
+            alt="Kureel Qasida Chanting"
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className="object-cover"

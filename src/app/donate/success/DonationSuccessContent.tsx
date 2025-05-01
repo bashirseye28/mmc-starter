@@ -35,7 +35,7 @@ export default function DonationSuccessContent() {
 
         if (res.ok) {
           setDonationDetails({
-            amount: data.amount_total ? parseFloat(data.amount_total) : 0,
+            amount: parseFloat(data.metadata?.donation_amount || "0"),
             frequency: data.frequency || 'One-time',
             method: data.payment_method_types?.[0] || 'Card',
             donorName: data.donor_name || 'Anonymous',

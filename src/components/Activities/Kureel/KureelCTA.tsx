@@ -21,10 +21,10 @@ const KureelCTA = () => {
         transition={{ duration: 0.8 }}
       >
         <h2 className="text-4xl font-bold font-heading mb-4">
-          Elevate Your Faith with <span className="text-gold">Kureel Xassida</span>
+          Elevate Your Faith with <span className="text-gold">Kureel Qasida</span>
         </h2>
         <p className="text-lg text-gray-200 font-body max-w-3xl mx-auto mb-6">
-          Discover the power of **Xassida recitations** and connect with the Murid spiritual tradition.
+          Discover the power of <strong>Qasida recitations</strong> and connect with the Murid spiritual tradition.
         </p>
 
         <div className="flex flex-col sm:flex-row justify-center gap-6">
@@ -35,7 +35,7 @@ const KureelCTA = () => {
               whileTap={{ scale: 0.95 }}
             >
               <FontAwesomeIcon icon={faBookOpen} />
-              Explore Xassidas
+              Explore Qasidas
             </motion.button>
           </Link>
 

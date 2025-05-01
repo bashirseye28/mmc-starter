@@ -15,7 +15,7 @@ const DaahiraOverview = () => {
         >
           <h2 className="text-4xl font-bold text-[#007676]">What Is Weekly Daahira?</h2>
           <p className="mt-4 text-lg text-gray-600">
-            A spiritual gathering dedicated to the recitation of Qassida, reflection, and community bonding through faith and devotion.
+            A spiritual gathering dedicated to the recitation of Qasida, reflection, and community bonding through faith and devotion.
           </p>
         </motion.div>
 
@@ -30,8 +30,8 @@ const DaahiraOverview = () => {
           {[
             {
               icon: <BookOpen size={40} className="text-gold" />,
-              title: "Qassida Recitation",
-              description: "Engage in rhythmic and collective recitation of Qassida poems."
+              title: "Qasida Recitation",
+              description: "Engage in rhythmic and collective recitation of Qasida poems."
             },
             {
               icon: <Users size={40} className="text-gold" />,

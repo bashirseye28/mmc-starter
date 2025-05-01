@@ -17,7 +17,7 @@ import {
 const categories = [
   { name: "All", icon: faBoxes },
   { name: "Rosaries", icon: faDharmachakra },
-  { name: "Xassida", icon: faBook },
+  { name: "Qasida", icon: faBook },
   { name: "Cafe Touba", icon: faCoffee },
   { name: "Moringa", icon: faLeaf },
   { name: "Islamic Items", icon: faPrayingHands },

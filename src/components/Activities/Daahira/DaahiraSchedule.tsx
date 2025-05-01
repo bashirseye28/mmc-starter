@@ -17,7 +17,7 @@ const WeeklyDaahiraSchedule = () => {
   return (
     <ScheduleComponent
       title="Weekly Daahira Schedule & Timings"
-      description="Join our Weekly Daahira every Monday for an evening of Xassida recitations, Islamic teachings, and community bonding."
+      description="Join our Weekly Daahira every Monday for an evening of Qasida recitations, Islamic teachings, and community bonding."
       schedules={schedules}
     />
   );

@@ -30,7 +30,7 @@ const DaahiraCTA = () => {
         {/* ✅ Description */}
         <p className="text-lg text-gray-200 font-body max-w-3xl mx-auto mb-6">
           Join our weekly Daahira sessions, immerse yourself in 
-          <span className="text-gold font-semibold"> Xassida recitations</span>, and strengthen your spiritual connection.
+          <span className="text-gold font-semibold"> Qasida recitations</span>, and strengthen your spiritual connection.
         </p>
 
         {/* ✅ CTA Buttons */}
