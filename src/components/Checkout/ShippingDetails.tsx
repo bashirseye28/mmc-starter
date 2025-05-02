@@ -32,11 +32,7 @@ const ShippingDetails = ({ onNext, onBack }: ShippingDetailsProps) => {
   const [errors, setErrors] = useState({ address: "", city: "", postcode: "" });
 
   const deliveryCost =
-    deliveryMethod === "standard"
-      ? 3.99
-      : deliveryMethod === "express"
-      ? 7.99
-      : 0;
+    deliveryMethod === "standard" ? 3.99 : deliveryMethod === "express" ? 7.99 : 0;
 
   const validateForm = () => {
     const newErrors = { address: "", city: "", postcode: "" };
@@ -85,12 +81,17 @@ const ShippingDetails = ({ onNext, onBack }: ShippingDetailsProps) => {
 
       {/* Delivery Option */}
       <div className="mb-8">
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
+        <label
+          htmlFor="delivery-method"
+          className="block text-sm font-semibold text-gray-700 mb-2"
+        >
           Choose a delivery option
         </label>
         <div className="relative">
           <Truck className="absolute left-4 top-3.5 text-gray-500 w-5 h-5" />
           <select
+            id="delivery-method"
+            aria-label="Delivery Method"
             value={deliveryMethod}
             onChange={(e) => setDeliveryMethod(e.target.value)}
             className="w-full px-12 py-3 border-2 border-gold rounded-lg focus:ring-primary focus:outline-none"
@@ -107,90 +108,90 @@ const ShippingDetails = ({ onNext, onBack }: ShippingDetailsProps) => {
         <>
           <h3 className="text-lg font-semibold text-primary mb-4">Delivery Address</h3>
 
-          {/* Street Address */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
               Street Address
             </label>
             <div className="relative">
               <MapPin className="absolute left-4 top-3.5 text-gray-500 w-5 h-5" />
               <input
+                id="address"
                 type="text"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="123 Murid Road"
+                autoComplete="shipping street-address"
+                required
                 className={`w-full px-12 py-3 border-2 rounded-lg focus:outline-none ${
                   errors.address ? "border-red-500" : "border-gold"
                 }`}
               />
             </div>
-            {errors.address && (
-              <p className="text-sm text-red-500 mt-1">{errors.address}</p>
-            )}
+            {errors.address && <p className="text-sm text-red-500 mt-1">{errors.address}</p>}
           </div>
 
-          {/* City & Postcode */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
                 City
               </label>
               <div className="relative">
                 <Landmark className="absolute left-4 top-3.5 text-gray-500 w-5 h-5" />
                 <input
+                  id="city"
                   type="text"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   placeholder="Manchester"
+                  autoComplete="address-level2"
+                  required
                   className={`w-full px-12 py-3 border-2 rounded-lg focus:outline-none ${
                     errors.city ? "border-red-500" : "border-gold"
                   }`}
                 />
               </div>
-              {errors.city && (
-                <p className="text-sm text-red-500 mt-1">{errors.city}</p>
-              )}
+              {errors.city && <p className="text-sm text-red-500 mt-1">{errors.city}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="postcode" className="block text-sm font-medium text-gray-700 mb-1">
                 Postcode
               </label>
               <input
+                id="postcode"
                 type="text"
                 value={postcode}
                 onChange={(e) => setPostcode(e.target.value)}
                 placeholder="M8 0PN"
+                autoComplete="postal-code"
+                required
                 className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none ${
                   errors.postcode ? "border-red-500" : "border-gold"
                 }`}
               />
-              {errors.postcode && (
-                <p className="text-sm text-red-500 mt-1">{errors.postcode}</p>
-              )}
+              {errors.postcode && <p className="text-sm text-red-500 mt-1">{errors.postcode}</p>}
             </div>
           </div>
         </>
       )}
 
-      {/* Country — always last in UK format */}
       <div className="mb-8">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
           Country
         </label>
         <div className="relative">
           <Globe className="absolute left-4 top-3.5 text-gray-500 w-5 h-5" />
           <select
+            id="country"
+            aria-label="Country"
             value={country}
             onChange={(e) => setCountry(e.target.value)}
-            className="w-full px-12 py-3 border-2 border-gold rounded-lg focus:outline-none focus:ring"
             disabled={deliveryMethod === "collection"}
+            className="w-full px-12 py-3 border-2 border-gold rounded-lg focus:outline-none focus:ring"
           >
-            {deliveryMethod === "collection" ? (
-              <option>United Kingdom</option>
-            ) : (
+            <option>United Kingdom</option>
+            {deliveryMethod !== "collection" && (
               <>
-                <option>United Kingdom</option>
                 <option>United States</option>
                 <option>France</option>
                 <option>Canada</option>
@@ -200,23 +201,18 @@ const ShippingDetails = ({ onNext, onBack }: ShippingDetailsProps) => {
         </div>
       </div>
 
-      {/* Collection Details */}
       {deliveryMethod === "collection" && (
         <div className="p-5 mb-6 bg-gray-50 border border-gold rounded-lg">
           <h3 className="text-primary font-semibold mb-2 flex items-center gap-2 text-sm">
             <MapPin className="w-4 h-4" /> Collection Point
           </h3>
           <p className="text-sm font-medium text-gray-800">Sunni Muslim Hall</p>
-          <p className="text-sm text-gray-600">
-            20 Brideoak Street, Manchester, M8 0PN, UK
-          </p>
+          <p className="text-sm text-gray-600">20 Brideoak Street, Manchester, M8 0PN, UK</p>
           <p className="text-sm text-gray-600 flex items-center gap-2 mt-2">
             <CalendarClock className="w-4 h-4 text-gold" />
             Mondays, 7:00 – 9:00 PM
           </p>
-          <p className="text-xs text-gray-500 mt-2">
-            Please bring your order confirmation when collecting.
-          </p>
+          <p className="text-xs text-gray-500 mt-2">Please bring your order confirmation.</p>
           <a
             href="https://www.google.com/maps?q=20+Brideoak+Street,+Manchester,+M8+0PN"
             target="_blank"
@@ -228,7 +224,6 @@ const ShippingDetails = ({ onNext, onBack }: ShippingDetailsProps) => {
         </div>
       )}
 
-      {/* Navigation Buttons */}
       <div className="flex flex-col sm:flex-row justify-between mt-8 gap-4">
         <button
           onClick={onBack}

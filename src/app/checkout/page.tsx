@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import CustomerInfo from "@/components/Checkout/CustomerInfo";
@@ -8,45 +8,26 @@ import ShippingDetails from "@/components/Checkout/ShippingDetails";
 import ReviewOrder from "@/components/Checkout/ReviewOrder";
 import PaymentMethod from "@/components/Checkout/PaymentMethod";
 import ProgressIndicator from "@/components/Checkout/ProgressIndicator";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faShoppingBag } from "@fortawesome/free-solid-svg-icons";
 import { db } from "@/app/lib/firebaseConfig";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-
-// =========================
-// ✅ Types
-// =========================
-
-interface CustomerData {
-  name: string;
-  email: string;
-  phone: string;
-}
-
-interface ShippingData {
-  address: string;
-  city: string;
-  postcode: string;
-  country: string;
-  shippingCost: number;
-  shippingType: string;
-}
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faShoppingBag } from "@fortawesome/free-solid-svg-icons";
 
 const CheckoutPage = () => {
   const router = useRouter();
   const { cart, updateQuantity, removeFromCart, clearCart } = useCart();
 
   const [step, setStep] = useState(1);
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const [customerData, setCustomerData] = useState<CustomerData>({
+  const [customerData, setCustomerData] = useState({
     name: "",
     email: "",
     phone: "",
   });
 
-  const [shippingData, setShippingData] = useState<ShippingData>({
+  const [shippingData, setShippingData] = useState({
     address: "",
     city: "",
     postcode: "",
@@ -58,26 +39,28 @@ const CheckoutPage = () => {
   const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const total = subtotal + shippingData.shippingCost;
 
-  // ✅ Redirect if cart is empty
   useEffect(() => {
-    if (cart.length === 0) {
-      router.push("/shop");
-    }
+    if (cart.length === 0) router.push("/shop");
   }, [cart, router]);
 
-  const handleConfirmOrder = async (method: string) => {
-    setError("");
+  const handleConfirmOrder = async (method: "stripe" | "whatsapp") => {
     setLoading(true);
+    setError("");
 
     try {
-      if (!customerData.name || !customerData.email || cart.length === 0) {
-        setError("Please fill in your customer details and ensure your cart is not empty.");
+      if (!customerData.name || !customerData.email) {
+        setError("Please complete customer info.");
+        setLoading(false);
+        return;
+      }
+
+      if (cart.length === 0) {
+        setError("Your cart is empty.");
         setLoading(false);
         return;
       }
 
       const orderId = `MMC-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-
       const orderData = {
         orderId,
         ...customerData,
@@ -93,58 +76,47 @@ const CheckoutPage = () => {
         createdAt: serverTimestamp(),
       };
 
-      // ✅ Save to Firestore
       await addDoc(collection(db, "orders"), orderData);
-      console.log("✅ Order saved:", orderId);
 
-      // ✅ Send WhatsApp message
-      await fetch("/api/notify/whatsapp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          orderId,
-          name: customerData.name,
-          total: total.toFixed(2),
-          items: cart.map((item) => ({
-            name: item.name,
-            quantity: item.quantity,
-            price: item.price.toFixed(2),
-          })),
-        }),
-      });
+      if (method === "whatsapp") {
+        const whatsappMsg = encodeURIComponent(
+          `New Order: ${orderId}\nName: ${customerData.name}\nTotal: £${total.toFixed(2)}\n\nItems:\n${cart
+            .map((item) => `• ${item.name} x${item.quantity}`)
+            .join("\n")}`
+        );
+        const whatsappUrl = `https://wa.me/${process.env.NEXT_PUBLIC_ADMIN_WHATSAPP}?text=${whatsappMsg}`;
+        clearCart();
+        window.location.href = whatsappUrl;
+        return;
+      }
 
-      // ✅ Stripe Checkout
       if (method === "stripe") {
         const res = await fetch("/api/stripe", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            cartItems: cart,
-            customerInfo: customerData,
+            cartItems: cart,          // ✅ FIX: must send as cartItems
+            customerInfo: customerData, // ✅ FIX: must send as customerInfo
             shippingData,
             orderId,
           }),
         });
-
         const data = await res.json();
-        if (!res.ok || !data.url) {
-          throw new Error("Failed to initiate Stripe checkout.");
-        }
+        if (!res.ok || !data.url) throw new Error(`Stripe checkout failed: ${data.error}`);
 
-        sessionStorage.setItem("customerEmail", customerData.email);
         clearCart();
         window.location.href = data.url;
       }
     } catch (err: any) {
       console.error("❌ Order Error:", err);
-      setError("There was a problem processing your order. Please try again.");
+      setError(err.message || "There was a problem processing your order.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 py-10">
+    <div className="min-h-screen bg-gray-50 py-10">
       <div className="max-w-3xl mx-auto bg-white shadow-lg rounded-xl p-6">
         <h1 className="text-2xl font-bold text-primary mb-6 text-center flex items-center justify-center gap-2">
           <FontAwesomeIcon icon={faShoppingBag} className="text-gold text-3xl" />
@@ -153,7 +125,6 @@ const CheckoutPage = () => {
 
         <ProgressIndicator step={step} />
 
-        {/* Error Message */}
         {error && (
           <div className="bg-red-100 text-red-700 px-4 py-3 rounded mb-4 border border-red-300 text-sm">
             {error}
@@ -161,11 +132,22 @@ const CheckoutPage = () => {
         )}
 
         {step === 1 && (
-          <CustomerInfo onNext={(data) => { setCustomerData(data); setStep(2); }} />
+          <CustomerInfo
+            onNext={(data) => {
+              setCustomerData(data);
+              setStep(2);
+            }}
+          />
         )}
 
         {step === 2 && (
-          <ShippingDetails onNext={(data) => { setShippingData(data); setStep(3); }} onBack={() => setStep(1)} />
+          <ShippingDetails
+            onNext={(data) => {
+              setShippingData(data);
+              setStep(3);
+            }}
+            onBack={() => setStep(1)}
+          />
         )}
 
         {step === 3 && (
@@ -186,8 +168,8 @@ const CheckoutPage = () => {
 
         {step === 4 && (
           <PaymentMethod
-            onBack={() => setStep(3)}
             onConfirm={handleConfirmOrder}
+            onBack={() => setStep(3)}
             cartItems={cart}
             customerData={customerData}
             shippingData={shippingData}
@@ -195,9 +177,8 @@ const CheckoutPage = () => {
           />
         )}
 
-        {/* Loader */}
         {loading && (
-          <div className="mt-4 text-center text-sm text-primary animate-pulse">
+          <div className="mt-4 text-center text-primary text-sm animate-pulse">
             Processing your order...
           </div>
         )}

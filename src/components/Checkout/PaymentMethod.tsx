@@ -13,7 +13,7 @@ import Image from "next/image";
 
 interface PaymentMethodProps {
   onBack: () => void;
-  onConfirm: (method: string) => void;
+  onConfirm: (method: "stripe" | "whatsapp") => void;
   cartItems: { id: string; name: string; price: number; quantity: number }[];
   customerData: { name: string; email: string; phone: string };
   shippingData: {
@@ -35,8 +35,8 @@ const PaymentMethod = ({
   shippingData,
   total = 0,
 }: PaymentMethodProps) => {
-  const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
-  const whatsappNumber = "+447541475547"; // ✅ Replace with your number
+  const [selectedMethod, setSelectedMethod] = useState<"stripe" | "whatsapp" | null>(null);
+  const whatsappNumber = process.env.NEXT_PUBLIC_ADMIN_WHATSAPP ?? "+447541475547";
 
   const handleConfirmOrder = () => {
     if (!selectedMethod) return;
@@ -50,7 +50,7 @@ const PaymentMethod = ({
         .join("\n");
 
       const message = `
-🛍️ *Order Request from Murid Marketplace*
+🛍️ *New Order - Manchester Murid Community Shop*
 
 📦 *Items:*
 ${orderLines}
@@ -65,12 +65,9 @@ ${orderLines}
 
 💰 *Total (incl. delivery):* £${total.toFixed(2)}
 
-I would like to place this order. Please confirm availability or next steps. Thank you.
-      `;
+I would like to place this order. Please confirm availability.`;
 
-      const whatsappURL = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-        message
-      )}`;
+      const whatsappURL = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
       window.open(whatsappURL, "_blank");
     } else {
       onConfirm(selectedMethod);
@@ -79,7 +76,6 @@ I would like to place this order. Please confirm availability or next steps. Tha
 
   return (
     <div className="bg-white shadow-lg rounded-lg p-8">
-      {/* Header */}
       <h3 className="text-2xl font-bold text-primary mb-6 text-center sm:text-left">
         Secure Checkout
       </h3>
@@ -99,8 +95,8 @@ I would like to place this order. Please confirm availability or next steps. Tha
 
       {/* Payment Options */}
       <div className="flex flex-col gap-4">
-        {/* Stripe */}
         <button
+          aria-label="Select Stripe Payment"
           className={`border-2 p-5 rounded-lg flex items-center justify-between transition ${
             selectedMethod === "stripe"
               ? "border-gold bg-gray-50 shadow-sm"
@@ -119,8 +115,8 @@ I would like to place this order. Please confirm availability or next steps. Tha
           )}
         </button>
 
-        {/* WhatsApp */}
         <button
+          aria-label="Select WhatsApp Checkout"
           className={`border-2 p-5 rounded-lg flex items-center justify-between transition ${
             selectedMethod === "whatsapp"
               ? "border-gold bg-gray-50 shadow-sm"
@@ -130,7 +126,7 @@ I would like to place this order. Please confirm availability or next steps. Tha
         >
           <div className="flex items-center gap-3">
             <FontAwesomeIcon icon={faWhatsapp} className="text-green-500 text-2xl" />
-            <span className="font-semibold">WhatsApp Checkout</span>
+            <span className="font-semibold">Checkout via WhatsApp</span>
           </div>
           {selectedMethod === "whatsapp" && (
             <FontAwesomeIcon icon={faCheckCircle} className="text-green-500" />
@@ -157,12 +153,12 @@ I would like to place this order. Please confirm availability or next steps. Tha
 
         <button
           onClick={handleConfirmOrder}
+          disabled={!selectedMethod}
           className={`px-6 py-3 rounded-lg flex items-center justify-center gap-2 transition ${
             selectedMethod
               ? "bg-gold text-black font-semibold hover:bg-yellow-500 shadow-sm"
               : "bg-gray-300 text-gray-500 cursor-not-allowed"
           }`}
-          disabled={!selectedMethod}
         >
           Confirm Order <FontAwesomeIcon icon={faArrowRight} />
         </button>

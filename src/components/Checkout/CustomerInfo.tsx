@@ -5,19 +5,15 @@ import { useRouter } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faShoppingCart, faArrowRight } from "@fortawesome/free-solid-svg-icons";
 
-interface Props {
-  onNext: (data: {
-    name: string; // ✅ now using `name` instead of `fullName`
-    email: string;
-    phone: string;
-  }) => void;
+interface CustomerInfoProps {
+  onNext: (data: { name: string; email: string; phone: string }) => void;
 }
 
-const CustomerInfo: React.FC<Props> = ({ onNext }) => {
+const CustomerInfo: React.FC<CustomerInfoProps> = ({ onNext }) => {
   const router = useRouter();
 
   const [formData, setFormData] = useState({
-    fullName: "", // used internally for the input
+    fullName: "",
     email: "",
     phone: "",
   });
@@ -48,7 +44,6 @@ const CustomerInfo: React.FC<Props> = ({ onNext }) => {
 
     const hasErrors = Object.values(newErrors).some((msg) => msg !== "");
     if (!hasErrors) {
-      // ✅ Map fullName to name for consistency
       onNext({
         name: formData.fullName,
         email: formData.email,
@@ -61,76 +56,86 @@ const CustomerInfo: React.FC<Props> = ({ onNext }) => {
     <div className="bg-white shadow-md rounded-lg p-6">
       <h2 className="text-2xl font-bold text-primary mb-6">Customer Information</h2>
 
-      <form className="space-y-5">
+      <form className="space-y-5" noValidate>
         {/* Full Name */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
             Full Name
           </label>
           <input
-            type="text"
+            id="fullName"
             name="fullName"
+            autoComplete="name"
             value={formData.fullName}
             onChange={handleChange}
+            placeholder="John Doe"
             className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 ${
               errors.fullName
                 ? "border-red-500 focus:ring-red-400"
                 : "border-gray-300 focus:ring-gold"
             }`}
-            placeholder="John Doe"
           />
           {errors.fullName && (
-            <p className="text-sm text-red-500 mt-1">{errors.fullName}</p>
+            <p className="text-sm text-red-500 mt-1 transition-opacity duration-300">
+              {errors.fullName}
+            </p>
           )}
         </div>
 
         {/* Email */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
             Email Address
           </label>
           <input
-            type="email"
+            id="email"
             name="email"
+            autoComplete="email"
+            type="email"
             value={formData.email}
             onChange={handleChange}
+            placeholder="john@example.com"
             className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 ${
               errors.email
                 ? "border-red-500 focus:ring-red-400"
                 : "border-gray-300 focus:ring-gold"
             }`}
-            placeholder="john@example.com"
           />
           {errors.email && (
-            <p className="text-sm text-red-500 mt-1">{errors.email}</p>
+            <p className="text-sm text-red-500 mt-1 transition-opacity duration-300">
+              {errors.email}
+            </p>
           )}
         </div>
 
         {/* Phone */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
             Phone Number
           </label>
           <input
-            type="tel"
+            id="phone"
             name="phone"
+            autoComplete="tel"
+            type="tel"
             value={formData.phone}
             onChange={handleChange}
+            placeholder="+44 123 4567 890"
             className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 ${
               errors.phone
                 ? "border-red-500 focus:ring-red-400"
                 : "border-gray-300 focus:ring-gold"
             }`}
-            placeholder="+44 123 4567 890"
           />
           {errors.phone && (
-            <p className="text-sm text-red-500 mt-1">{errors.phone}</p>
+            <p className="text-sm text-red-500 mt-1 transition-opacity duration-300">
+              {errors.phone}
+            </p>
           )}
         </div>
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row justify-between mt-8 gap-4">
-          {/* Back to Shop */}
           <button
             type="button"
             onClick={() => router.push("/shop")}
@@ -140,7 +145,6 @@ const CustomerInfo: React.FC<Props> = ({ onNext }) => {
             Continue Shopping
           </button>
 
-          {/* Next Step */}
           <button
             type="button"
             onClick={handleNext}
