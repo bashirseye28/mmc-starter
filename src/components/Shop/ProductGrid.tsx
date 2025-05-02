@@ -11,7 +11,7 @@ import { Product } from "@/types/types";
 
 interface ProductGridProps {
   category: string;
-  openCart: () => void;
+  openCart: () => void; // ✅ FIX: add openCart prop
 }
 
 const PAGE_SIZE = 8;
@@ -41,7 +41,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ category, openCart }) => {
             : productList.filter((p) => p.category === category);
 
         setAllProducts(filtered);
-        setVisibleCount(PAGE_SIZE); // Reset visible count on category change
+        setVisibleCount(PAGE_SIZE); // Reset on category change
       } catch (err) {
         console.error("❌ Failed to fetch products:", err);
         setError("Failed to load products.");
@@ -63,33 +63,25 @@ const ProductGrid: React.FC<ProductGridProps> = ({ category, openCart }) => {
 
   return (
     <section className="py-12 container mx-auto px-6" id="products">
-      <h2 className="text-3xl font-bold text-primary text-center">
-        Our Products
-      </h2>
+      <h2 className="text-3xl font-bold text-primary text-center">Our Products</h2>
       <p className="text-gray-600 text-center mt-2">
         Explore our high-quality items available for purchase.
       </p>
 
       {loading ? (
-        <div className="text-center py-10 text-primary text-lg font-medium">
-          Loading products...
-        </div>
+        <div className="text-center py-10 text-primary font-medium">Loading products...</div>
       ) : error ? (
-        <div className="text-center py-10 text-red-600 text-lg">{error}</div>
+        <div className="text-center py-10 text-red-600 font-medium">{error}</div>
       ) : visibleProducts.length === 0 ? (
-        <div className="text-center py-10 text-gray-600 text-lg">
-          No products found in this category.
-        </div>
+        <div className="text-center py-10 text-gray-600">No products found in this category.</div>
       ) : (
         <>
-          {/* ✅ Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-10">
             {visibleProducts.map((product) => (
               <div
                 key={product.id}
-                className="bg-white shadow-lg rounded-xl overflow-hidden transition duration-300 hover:shadow-2xl hover:-translate-y-2"
+                className="bg-white shadow-lg rounded-xl overflow-hidden transition hover:shadow-2xl hover:-translate-y-1"
               >
-                {/* ✅ Updated Image style */}
                 <div className="relative w-full h-56">
                   {product.image ? (
                     <Image
@@ -107,7 +99,6 @@ const ProductGrid: React.FC<ProductGridProps> = ({ category, openCart }) => {
                   )}
                 </div>
 
-                {/* ✅ Content */}
                 <div className="p-5 flex flex-col h-full">
                   <h3 className="text-lg font-bold text-primary">{product.name}</h3>
                   <p className="text-gray-600 mt-1">{formatPrice(product.price)}</p>
@@ -116,7 +107,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ category, openCart }) => {
                     <button
                       onClick={() => {
                         addToCart({ ...product, quantity: 1 });
-                        openCart();
+                        openCart(); // ✅ open drawer
                       }}
                       className="w-full bg-gold text-black font-semibold py-2 rounded-md flex items-center justify-center gap-2 hover:bg-yellow-500 transition"
                       aria-label={`Add ${product.name} to cart`}
@@ -130,7 +121,6 @@ const ProductGrid: React.FC<ProductGridProps> = ({ category, openCart }) => {
             ))}
           </div>
 
-          {/* ✅ Load More Button */}
           {visibleCount < allProducts.length && (
             <div className="text-center mt-10">
               <button

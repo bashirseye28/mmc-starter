@@ -1,18 +1,16 @@
 "use client";
 
 import { useState } from "react";
-
-// Components
 import ShopHero from "@/components/Shop/ShopHero";
 import CategoryFilter from "@/components/Shop/CategoryFilter";
 import ProductGrid from "@/components/Shop/ProductGrid";
 import FeaturedProducts from "@/components/Shop/FeaturedProducts";
 import ShopBenefits from "@/components/Shop/ShopBenefits";
-import CartSidebar from "@/components/Cart/CartSidebar";
+import CartDrawer from "@/components/Cart/CartDrawer"; // ✅ RE-ADD THIS
 
 const ShopPage = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false); // ✅ restore
 
   const handleCategorySelect = (category: string) => setSelectedCategory(category);
   const openCart = () => setIsCartOpen(true);
@@ -20,10 +18,8 @@ const ShopPage = () => {
 
   return (
     <main className="bg-lightBg min-h-screen">
-      {/* 🛍️ Hero */}
       <ShopHero />
 
-      {/* 🗂️ Category Filter */}
       <section className="container mx-auto px-6 py-10">
         <CategoryFilter
           selectedCategory={selectedCategory}
@@ -31,21 +27,17 @@ const ShopPage = () => {
         />
       </section>
 
-      {/* 🛒 Products */}
       <section className="container mx-auto px-6 py-10" id="products">
-        <ProductGrid category={selectedCategory} openCart={openCart} />
+        <ProductGrid category={selectedCategory} openCart={openCart} /> {/* ✅ add openCart */}
       </section>
 
-      {/* 🌟 Featured */}
       <section className="container mx-auto px-6 py-10">
-        <FeaturedProducts openCart={openCart} /> {/* ✅ FIXED */}
+        <FeaturedProducts openCart={openCart} /> {/* ✅ add openCart */}
       </section>
 
-      {/* 💡 Benefits */}
       <ShopBenefits />
 
-      {/* 🧺 Cart Drawer */}
-      <CartSidebar isOpen={isCartOpen} onClose={closeCart} />
+      <CartDrawer isOpen={isCartOpen} onClose={closeCart} /> {/* ✅ drawer */}
     </main>
   );
 };

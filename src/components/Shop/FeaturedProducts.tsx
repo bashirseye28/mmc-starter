@@ -7,10 +7,10 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faShoppingCart, faStar, faBoxOpen } from "@fortawesome/free-solid-svg-icons";
 import { useCart } from "@/context/CartContext";
-import { Product } from "@/types/types"; // ✅ IMPORT Product type!
+import { Product } from "@/types/types";
 
 interface FeaturedProductsProps {
-  openCart: () => void;
+  openCart: () => void; // ✅ FIX: add openCart prop
 }
 
 const FeaturedProducts: React.FC<FeaturedProductsProps> = ({ openCart }) => {
@@ -70,14 +70,12 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({ openCart }) => {
             {products.map((product) => (
               <article
                 key={product.id}
-                className="relative bg-white border border-gray-200 rounded-lg shadow-sm p-4 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1"
+                className="relative bg-white border border-gray-200 rounded-lg shadow-sm p-4 hover:shadow-lg transition hover:-translate-y-1"
               >
-                {/* 🟨 Badge */}
                 <span className="absolute top-3 left-3 bg-gold text-black text-xs font-semibold px-2 py-1 rounded-full shadow">
                   ★ Featured
                 </span>
 
-                {/* 📷 Product Image */}
                 <div className="relative w-full h-48 rounded overflow-hidden">
                   <Image
                     src={product.image}
@@ -89,20 +87,17 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({ openCart }) => {
                   />
                 </div>
 
-                {/* ℹ️ Product Info */}
                 <h3 className="text-lg font-semibold text-primary mt-4">{product.name}</h3>
                 <p className="text-gray-600 mt-1">
-                  {new Intl.NumberFormat("en-GB", {
-                    style: "currency",
-                    currency: "GBP",
-                  }).format(product.price)}
+                  {new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(
+                    product.price
+                  )}
                 </p>
 
-                {/* 🛒 Add to Cart */}
                 <button
                   onClick={() => {
                     addToCart({ ...product, quantity: 1 });
-                    openCart();
+                    openCart(); // ✅ open drawer
                   }}
                   className="mt-4 w-full bg-gold text-black font-medium py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-yellow-500 transition"
                   aria-label={`Add ${product.name} to cart`}

@@ -34,7 +34,13 @@ const CartPage = () => {
               <div key={item.id} className="bg-white border rounded-lg shadow-md p-4">
                 {/* ✅ Product Image */}
                 <div className="relative w-full h-40">
-                  <Image src={item.image} alt={item.name} layout="fill" objectFit="cover" className="rounded-md" />
+                  <Image
+                    src={item.image || "/placeholder.jpg"}  // ✅ fallback image
+                    alt={item.name}
+                    layout="fill"
+                    objectFit="cover"
+                    className="rounded-md"
+                  />
                 </div>
 
                 {/* ✅ Product Info */}
@@ -64,7 +70,7 @@ const CartPage = () => {
                   onClick={() => removeFromCart(item.id)}
                   className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition w-full"
                 >
-                  <FontAwesomeIcon icon={faTrash} />
+                  <FontAwesomeIcon icon={faTrash} className="mr-2" />
                   Remove
                 </button>
               </div>
@@ -83,6 +89,13 @@ const CartPage = () => {
             >
               Clear Cart
             </button>
+
+            {/* ✅ Checkout Button */}
+            <Link href="/checkout">
+              <button className="w-full mt-4 px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-teal-700 transition">
+                Proceed to Checkout
+              </button>
+            </Link>
           </div>
         </>
       )}
