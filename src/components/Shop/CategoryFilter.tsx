@@ -8,47 +8,50 @@ import {
   faLeaf,
   faBook,
   faPrayingHands,
-  faDharmachakra, // ✅ Best alternative for prayer beads
   faBoxes,
+  faHatCowboy,
+  faShirt,
   faChevronDown,
 } from "@fortawesome/free-solid-svg-icons";
 
-// ✅ Define Categories with Icons
 const categories = [
   { name: "All", icon: faBoxes },
-  { name: "Rosaries", icon: faDharmachakra },
   { name: "Qasida", icon: faBook },
   { name: "Coffee", icon: faCoffee },
   { name: "Moringa", icon: faLeaf },
   { name: "Islamic Items", icon: faPrayingHands },
+  { name: "Headwear", icon: faHatCowboy },
+  { name: "Clothing", icon: faShirt },
 ];
 
-// ✅ Define Props
 interface CategoriesFilterProps {
   selectedCategory: string;
   onCategorySelect: (category: string) => void;
 }
 
-const CategoriesFilter: React.FC<CategoriesFilterProps> = ({ selectedCategory, onCategorySelect }) => {
+const CategoriesFilter: React.FC<CategoriesFilterProps> = ({
+  selectedCategory,
+  onCategorySelect,
+}) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   return (
     <section className="py-12 bg-gray-100">
       <div className="container mx-auto px-6 text-center">
-        {/* ✅ Section Title */}
         <h2 className="text-3xl font-bold text-primary flex justify-center items-center gap-2">
           <FontAwesomeIcon icon={faFilter} className="text-xl" />
           Browse Categories
         </h2>
-        <p className="text-lg text-gray-600 mt-2">Select a category to explore our products.</p>
+        <p className="text-lg text-gray-600 mt-2">
+          Select a category to explore our products.
+        </p>
 
-        {/* ✅ Mobile Dropdown */}
         <div className="relative mt-6 w-full max-w-xs mx-auto md:hidden">
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
             className="w-full bg-white text-primary border border-gray-300 rounded-lg py-3 px-4 flex justify-between items-center shadow-md hover:bg-gray-200 transition"
           >
-            {selectedCategory} 
+            {selectedCategory}
             <FontAwesomeIcon icon={faChevronDown} className="text-lg" />
           </button>
           {dropdownOpen && (
@@ -71,7 +74,6 @@ const CategoriesFilter: React.FC<CategoriesFilterProps> = ({ selectedCategory, o
           )}
         </div>
 
-        {/* ✅ Desktop Category Buttons */}
         <div className="hidden md:flex flex-wrap justify-center gap-4 mt-8">
           {categories.map((category) => (
             <button

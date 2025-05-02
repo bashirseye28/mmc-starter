@@ -7,22 +7,19 @@ import {
   faLeaf,
   faBook,
   faPrayingHands,
-  faDharmachakra,
   faBoxes,
   faHatCowboy,
   faShirt,
 } from "@fortawesome/free-solid-svg-icons";
 
-// ✅ Define Categories with Icons
 const categories = [
   { name: "All", icon: faBoxes },
-  { name: "Rosaries", icon: faDharmachakra },
   { name: "Qasida", icon: faBook },
-  { name: "Cafe Touba", icon: faCoffee },
+  { name: "Coffee", icon: faCoffee },
   { name: "Moringa", icon: faLeaf },
   { name: "Islamic Items", icon: faPrayingHands },
-  { name: "Mbaxana", icon: faHatCowboy },
-  { name: "Baay Lahad", icon: faShirt },
+  { name: "Headwear", icon: faHatCowboy },
+  { name: "Clothing", icon: faShirt },
 ];
 
 interface ProductCategoriesProps {
@@ -42,18 +39,13 @@ const ProductCategories: React.FC<ProductCategoriesProps> = ({
   return (
     <section className="py-12 bg-gray-100" aria-labelledby="shop-categories">
       <div className="container mx-auto px-6 text-center">
-        {/* ✅ Section Title */}
-        <h2
-          id="shop-categories"
-          className="text-3xl font-bold text-primary mb-2"
-        >
+        <h2 id="shop-categories" className="text-3xl font-bold text-primary mb-2">
           Shop by Category
         </h2>
         <p className="text-lg text-gray-600">
           Easily find what you're looking for.
         </p>
 
-        {/* ✅ Scrollable Category Buttons */}
         <nav
           aria-label="Product Categories"
           className="mt-8 flex gap-4 overflow-x-auto justify-start sm:justify-center px-1 sm:flex-wrap scrollbar-hide"

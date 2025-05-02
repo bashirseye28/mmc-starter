@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { CheckCircle, Truck, MapPin, PackageSearch, FileDown } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { CheckCircle, Truck, MapPin, PackageSearch, FileDown } from "lucide-react";
 
 export default function CheckoutSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const sessionId = searchParams.get('session_id');
+  const sessionId = searchParams.get("session_id");
 
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
@@ -16,24 +16,24 @@ export default function CheckoutSuccessContent() {
 
   useEffect(() => {
     if (!sessionId) {
-      setError('Missing session ID.');
+      setError("Missing session ID.");
       setLoading(false);
       return;
     }
 
     const fetchSessionData = async () => {
       try {
-        const res = await fetch(`/api/stripe/session/${sessionId}`);
-        const data = await res.json();
-
-        if (res.ok) {
-          setSessionData(data);
+        const res = await fetch(`/api/shop/session/${sessionId}`); // ✅ updated path if under /shop/session
+        if (!res.ok) {
+          const errorData = await res.json();
+          setError(errorData.error || "Failed to retrieve order.");
         } else {
-          setError(data.error || 'Failed to retrieve order.');
+          const data = await res.json();
+          setSessionData(data);
         }
       } catch (err) {
         console.error(err);
-        setError('Something went wrong. Please try again.');
+        setError("Something went wrong. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -47,10 +47,11 @@ export default function CheckoutSuccessContent() {
     setDownloading(true);
 
     try {
-      const res = await fetch(`/api/receipt/${sessionId}`);
+      const res = await fetch(`/api/shop/receipt/${sessionId}`); // ✅ updated path if under /shop/receipt
+      if (!res.ok) throw new Error("Failed to fetch receipt.");
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
       a.download = `receipt-${sessionId}.pdf`;
       document.body.appendChild(a);
@@ -58,24 +59,32 @@ export default function CheckoutSuccessContent() {
       a.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      alert('Failed to download receipt.');
+      alert("Failed to download receipt.");
     } finally {
       setDownloading(false);
     }
   };
 
   const { metadata, customer_email } = sessionData || {};
-  const address = metadata?.['Shipping Address'] || 'N/A';
-  const method = metadata?.['Shipping Method'] || 'Standard Delivery';
-  const total = metadata?.['Total Paid'] || '0.00';
-  const orderId = metadata?.['Order ID'] || 'N/A';
+  const address = metadata?.["Shipping Address"] ?? "N/A";
+  const method = metadata?.["Shipping Method"] ?? "Standard Delivery";
+  const total = metadata?.["Total Paid"] ?? "0.00";
+  const orderId = metadata?.["Order ID"] ?? "N/A";
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading your order...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Loading your order...
+      </div>
+    );
   }
 
   if (error || !sessionData) {
-    return <div className="min-h-screen flex items-center justify-center text-red-600">{error}</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center text-red-600">
+        {error}
+      </div>
+    );
   }
 
   return (
@@ -85,7 +94,9 @@ export default function CheckoutSuccessContent() {
           <CheckCircle className="mx-auto h-16 w-16 text-primary" />
           <h1 className="text-3xl font-bold text-primary mt-4">Thank you!</h1>
           <p className="text-gray-700 mt-2">Confirmation sent to:</p>
-          <p className="text-darkText font-medium mt-1">{customer_email}</p>
+          <p className="text-darkText font-medium mt-1">
+            {customer_email ?? "No email provided"}
+          </p>
           <p className="text-xs text-gray-500 mt-1">Order ID: {orderId}</p>
         </div>
 
@@ -98,11 +109,17 @@ export default function CheckoutSuccessContent() {
             </h2>
             <p className="flex items-start gap-2 mb-3">
               <Truck className="w-4 h-4 mt-1 text-gray-500" />
-              <span><strong>Method:</strong> {method}</span>
+              <span>
+                <strong>Method:</strong> {method}
+              </span>
             </p>
             <p className="flex items-start gap-2 mb-3">
               <MapPin className="w-4 h-4 mt-1 text-gray-500" />
-              <span><strong>Address:</strong><br /><span className="whitespace-pre-line">{address}</span></span>
+              <span>
+                <strong>Address:</strong>
+                <br />
+                <span className="whitespace-pre-line">{address}</span>
+              </span>
             </p>
             <p className="flex items-center gap-2">
               💰 <strong>Total Paid:</strong> £{total}
@@ -118,7 +135,7 @@ export default function CheckoutSuccessContent() {
 
         <div className="mt-6 flex flex-col sm:flex-row justify-center gap-4">
           <button
-            onClick={() => router.push('/shop')}
+            onClick={() => router.push("/shop")}
             className="w-full sm:w-auto bg-gold hover:bg-yellow-400 text-black font-semibold py-2 px-6 rounded-lg shadow transition"
           >
             Continue Shopping
@@ -129,7 +146,7 @@ export default function CheckoutSuccessContent() {
             className="w-full sm:w-auto bg-primary hover:bg-teal-700 text-white font-medium py-2 px-6 rounded-lg flex items-center justify-center gap-2 transition disabled:opacity-50"
           >
             <FileDown className="w-4 h-4" />
-            {downloading ? 'Preparing...' : 'Download Receipt'}
+            {downloading ? "Preparing..." : "Download Receipt"}
           </button>
         </div>
       </div>

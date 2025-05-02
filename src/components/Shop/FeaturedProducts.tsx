@@ -19,7 +19,7 @@ interface Product {
 }
 
 const FeaturedProducts = () => {
-  const { addToCart } = useCart();
+  const { addToCart } = useCart(); // ✅ only use addToCart; openCart handled inside context
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -105,7 +105,7 @@ const FeaturedProducts = () => {
 
                 {/* 🛒 Add to Cart */}
                 <button
-                  onClick={() => addToCart({ ...product, quantity: 1 })}
+                  onClick={() => addToCart({ ...product, quantity: 1 })} // ✅ no openCart here!
                   className="mt-4 w-full bg-gold text-black font-medium py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-yellow-500 transition"
                   aria-label={`Add ${product.name} to cart`}
                 >

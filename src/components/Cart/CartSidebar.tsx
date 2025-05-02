@@ -13,29 +13,24 @@ import {
   faPlus,
 } from "@fortawesome/free-solid-svg-icons";
 
-interface CartSidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-const CartSidebar: FC<CartSidebarProps> = ({ isOpen, onClose }) => {
-  const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
+const CartSidebar: FC = () => {
+  const { cart, removeFromCart, updateQuantity, clearCart, isCartOpen, closeCart } = useCart();
   const router = useRouter();
 
   return (
     <>
       {/* Overlay */}
-      {isOpen && (
+      {isCartOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm z-40"
-          onClick={onClose}
+          onClick={closeCart}
         />
       )}
 
       {/* Sidebar */}
       <div
         className={`fixed top-0 right-0 bottom-0 w-full sm:w-[400px] bg-white shadow-lg z-50 transition-transform duration-300 ease-in-out flex flex-col ${
-          isOpen ? "translate-x-0" : "translate-x-full"
+          isCartOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
         {/* Header */}
@@ -44,7 +39,7 @@ const CartSidebar: FC<CartSidebarProps> = ({ isOpen, onClose }) => {
             <FontAwesomeIcon icon={faShoppingCart} className="text-gold" />
             Your Cart
           </h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-red-600">
+          <button onClick={closeCart} className="text-gray-500 hover:text-red-600">
             <FontAwesomeIcon icon={faTimes} size="lg" />
           </button>
         </div>
@@ -55,7 +50,7 @@ const CartSidebar: FC<CartSidebarProps> = ({ isOpen, onClose }) => {
             <div className="text-center mt-10">
               <p className="text-gray-600 text-lg">Your cart is empty.</p>
               <button
-                onClick={onClose}
+                onClick={closeCart}
                 className="mt-4 px-6 py-3 border border-primary text-primary font-semibold rounded-lg shadow hover:bg-primary hover:text-white transition"
               >
                 Continue Shopping
@@ -142,7 +137,7 @@ const CartSidebar: FC<CartSidebarProps> = ({ isOpen, onClose }) => {
               </button>
               <button
                 onClick={() => {
-                  onClose();
+                  closeCart();
                   router.push("/checkout");
                 }}
                 className="w-full px-4 py-3 bg-primary text-white rounded-lg hover:bg-opacity-90 transition"
