@@ -68,7 +68,7 @@ const CustomerInfo: React.FC<CustomerInfoProps> = ({ onNext }) => {
             autoComplete="name"
             value={formData.fullName}
             onChange={handleChange}
-            placeholder="John Doe"
+            placeholder="Dongo Daara"
             className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 ${
               errors.fullName
                 ? "border-red-500 focus:ring-red-400"
@@ -94,7 +94,7 @@ const CustomerInfo: React.FC<CustomerInfoProps> = ({ onNext }) => {
             type="email"
             value={formData.email}
             onChange={handleChange}
-            placeholder="john@example.com"
+            placeholder="bashir@example.com"
             className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 ${
               errors.email
                 ? "border-red-500 focus:ring-red-400"

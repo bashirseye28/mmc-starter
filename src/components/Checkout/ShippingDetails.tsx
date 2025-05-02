@@ -162,7 +162,7 @@ const ShippingDetails = ({ onNext, onBack }: ShippingDetailsProps) => {
                 type="text"
                 value={postcode}
                 onChange={(e) => setPostcode(e.target.value)}
-                placeholder="M8 0PN"
+                placeholder="M1 1AB"
                 autoComplete="postal-code"
                 required
                 className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none ${
