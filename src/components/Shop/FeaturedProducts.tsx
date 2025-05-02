@@ -7,19 +7,14 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faShoppingCart, faStar, faBoxOpen } from "@fortawesome/free-solid-svg-icons";
 import { useCart } from "@/context/CartContext";
+import { Product } from "@/types/types"; // ✅ IMPORT Product type!
 
-// ✅ Define Product Type
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  image: string;
-  category: string;
-  featured?: boolean;
+interface FeaturedProductsProps {
+  openCart: () => void;
 }
 
-const FeaturedProducts = () => {
-  const { addToCart } = useCart(); // ✅ only use addToCart; openCart handled inside context
+const FeaturedProducts: React.FC<FeaturedProductsProps> = ({ openCart }) => {
+  const { addToCart } = useCart();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -105,7 +100,10 @@ const FeaturedProducts = () => {
 
                 {/* 🛒 Add to Cart */}
                 <button
-                  onClick={() => addToCart({ ...product, quantity: 1 })} // ✅ no openCart here!
+                  onClick={() => {
+                    addToCart({ ...product, quantity: 1 });
+                    openCart();
+                  }}
                   className="mt-4 w-full bg-gold text-black font-medium py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-yellow-500 transition"
                   aria-label={`Add ${product.name} to cart`}
                 >

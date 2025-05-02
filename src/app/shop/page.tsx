@@ -4,7 +4,7 @@ import { useState } from "react";
 
 // Components
 import ShopHero from "@/components/Shop/ShopHero";
-import CategoryFilter from "@/components/Shop/CategoryFilter"; // ✅ Fixed: no space in filename
+import CategoryFilter from "@/components/Shop/CategoryFilter";
 import ProductGrid from "@/components/Shop/ProductGrid";
 import FeaturedProducts from "@/components/Shop/FeaturedProducts";
 import ShopBenefits from "@/components/Shop/ShopBenefits";
@@ -38,7 +38,7 @@ const ShopPage = () => {
 
       {/* 🌟 Featured */}
       <section className="container mx-auto px-6 py-10">
-        <FeaturedProducts />
+        <FeaturedProducts openCart={openCart} /> {/* ✅ FIXED */}
       </section>
 
       {/* 💡 Benefits */}
