@@ -1,15 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+export const dynamic = "force-dynamic"; // ✅ skip static generation
+
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheckCircle } from "@fortawesome/free-solid-svg-icons";
 import Link from "next/link";
 
-const SuccessPage = () => {
+const ParamsReader = ({ setSessionId }: { setSessionId: (id: string | null) => void }) => {
   const params = useSearchParams();
-  const sessionId = params.get("session_id");
+  useEffect(() => {
+    const id = params.get("session_id");
+    setSessionId(id);
+  }, [params, setSessionId]);
+  return null; // we don’t render anything here
+};
 
+const SuccessPage = () => {
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [orderData, setOrderData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -43,6 +52,10 @@ const SuccessPage = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
       <div className="bg-white shadow-lg rounded-lg p-8 max-w-lg text-center">
+        <Suspense>
+          <ParamsReader setSessionId={setSessionId} />
+        </Suspense>
+
         {loading ? (
           <p className="animate-pulse text-primary">Loading your order...</p>
         ) : error ? (
