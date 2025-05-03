@@ -1,16 +1,11 @@
-// /lib/firebaseAdmin.ts
-import * as admin from "firebase-admin";
+// /src/lib/firebaseAdmin.ts
+import { getApps, initializeApp, applicationDefault } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
 
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    }),
+if (!getApps().length) {
+  initializeApp({
+    credential: applicationDefault(),
   });
 }
 
-const db = admin.firestore();
-
-export { admin, db };
+export const auth = getAuth();
