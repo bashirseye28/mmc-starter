@@ -1,11 +1,18 @@
-// /src/lib/firebaseAdmin.ts
-import { getApps, initializeApp, applicationDefault } from "firebase-admin/app";
+// src/lib/firebaseAdmin.ts
+import { cert, getApps, initializeApp } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
 
+// ✅ Only initialize once
 if (!getApps().length) {
   initializeApp({
-    credential: applicationDefault(),
+    credential: cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+    }),
   });
 }
 
+export const db = getFirestore();
 export const auth = getAuth();
