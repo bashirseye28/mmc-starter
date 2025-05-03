@@ -23,7 +23,7 @@ export async function GET(req: Request) {
 
     // ✅ Send email
     const emailResult = await resend.emails.send({
-      from: "orders@yourdomain.com",
+      from: "info@manchestermuridcommunity.org",
       to: session.customer_email!,
       subject: "Your Order Confirmation",
       html: `
