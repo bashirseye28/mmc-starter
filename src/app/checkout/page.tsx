@@ -76,8 +76,45 @@ const CheckoutPage = () => {
         createdAt: serverTimestamp(),
       };
 
+      // ✅ Save order to Firestore
       await addDoc(collection(db, "orders"), orderData);
 
+      // ✅ Send confirmation email to customer
+      try {
+        const emailRes = await fetch("/api/email/confirmation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            to: customerData.email,
+            orderId,
+            name: customerData.name,
+            cartItems: cart,
+            total,
+          }),
+        });
+        if (!emailRes.ok) console.error("❌ Failed to send confirmation email");
+      } catch (e) {
+        console.error("❌ Email API error:", e);
+      }
+
+      // ✅ Notify admin via API (WhatsApp + Email inside backend)
+      try {
+        const notifyRes = await fetch("/api/notify/admin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderId,
+            customerName: customerData.name,
+            total,
+            cartItems: cart,
+          }),
+        });
+        if (!notifyRes.ok) console.error("❌ Failed to notify admin");
+      } catch (e) {
+        console.error("❌ Notify API error:", e);
+      }
+
+      // ✅ WhatsApp redirect
       if (method === "whatsapp") {
         const whatsappMsg = encodeURIComponent(
           `New Order: ${orderId}\nName: ${customerData.name}\nTotal: £${total.toFixed(2)}\n\nItems:\n${cart
@@ -90,13 +127,14 @@ const CheckoutPage = () => {
         return;
       }
 
+      // ✅ Stripe checkout
       if (method === "stripe") {
         const res = await fetch("/api/stripe", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            cartItems: cart,          // ✅ FIX: must send as cartItems
-            customerInfo: customerData, // ✅ FIX: must send as customerInfo
+            cartItems: cart,
+            customerInfo: customerData,
             shippingData,
             orderId,
           }),
