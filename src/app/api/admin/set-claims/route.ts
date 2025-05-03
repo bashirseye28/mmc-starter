@@ -30,3 +30,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+console.log("✅ raw PRIVATE_KEY:", process.env.FIREBASE_PRIVATE_KEY);
+console.log("✅ replaced PRIVATE_KEY:", process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"));
