@@ -2,13 +2,12 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { Resend } from "resend";
 
-// ✅ Ensure dynamic function → required for webhook routes (no static caching)
+// ✅ Required for dynamic API route (disable static caching in Next.js)
 export const dynamic = "force-dynamic";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-02-24.acacia",
 });
-
 const resend = new Resend(process.env.RESEND_API_KEY!);
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
@@ -26,9 +25,28 @@ export async function POST(req: Request) {
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
-    const metadata = session.metadata ?? {};
 
-    // ✅ If it's a donation (based on donation metadata)
+    let metadata = session.metadata ?? {}; // fallback if empty
+
+    // ✅ Retrieve metadata from PaymentIntent if payment
+    if (session.payment_intent) {
+      const paymentIntent = await stripe.paymentIntents.retrieve(
+        session.payment_intent as string
+      );
+      metadata = paymentIntent.metadata ?? {};
+    }
+
+    // ✅ Retrieve metadata from Subscription if subscription
+    if (session.subscription) {
+      const subscription = await stripe.subscriptions.retrieve(
+        session.subscription as string
+      );
+      metadata = subscription.metadata ?? {};
+    }
+
+    console.log("✅ Retrieved metadata:", metadata);
+
+    // 🔍 Check if donation (has donation_amount)
     if (metadata.donation_amount) {
       const donorName = metadata.donor_name ?? "Anonymous";
       const donorEmail = metadata.donor_email ?? "Not Provided";
@@ -37,30 +55,30 @@ export async function POST(req: Request) {
 
       try {
         await resend.emails.send({
-          from: "donations@manchestermuridcommunity.org", // ✅ must be verified sender in Resend
+          from: "donations@manchestermuridcommunity.org",
           to: session.customer_email!,
           subject: "Thank You for Your Donation!",
           html: `
             <h2>Thank You for Your Generous Donation!</h2>
             <p>Dear <strong>${donorName}</strong>,</p>
             <p>Your donation of <strong>£${donationAmount}</strong> (${donationFrequency}) has been received.</p>
-            <p>We truly appreciate your support for Manchester Murid Community!</p>
+            <p>We truly appreciate your support!</p>
           `,
         });
-        console.log("✅ Donation confirmation email sent to:", session.customer_email);
+        console.log("✅ Donation email sent to:", session.customer_email);
       } catch (err) {
-        console.error("❌ Failed to send donation email via Resend:", err);
+        console.error("❌ Failed to send donation email:", err);
       }
     }
 
-    // ✅ If it's a shop order (based on order metadata)
+    // ✅ Check if shop order (has Order ID metadata)
     else if (metadata["Order ID"]) {
       const orderId = metadata["Order ID"];
       const totalPaid = metadata["Total Paid"];
 
       try {
         await resend.emails.send({
-          from: "orders@manchestermuridcommunity.org", // ✅ must be verified sender
+          from: "orders@manchestermuridcommunity.org",
           to: session.customer_email!,
           subject: `Your Order Confirmation (${orderId})`,
           html: `
@@ -69,15 +87,14 @@ export async function POST(req: Request) {
             <p>Total Paid: £${totalPaid}</p>
           `,
         });
-        console.log("✅ Shop order confirmation email sent to:", session.customer_email);
+        console.log("✅ Shop order email sent to:", session.customer_email);
       } catch (err) {
-        console.error("❌ Failed to send shop order email via Resend:", err);
+        console.error("❌ Failed to send shop order email:", err);
       }
     }
 
-    // ✅ Unknown metadata fallback
     else {
-      console.log("⚠️ checkout.session.completed received but metadata unrecognized:", metadata);
+      console.log("⚠️ checkout.session.completed but no known metadata keys found:", metadata);
     }
   }
 
