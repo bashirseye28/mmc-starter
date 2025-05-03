@@ -1,12 +1,9 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { Resend } from "resend"; // ✅ example using Resend
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-02-24.acacia",
 });
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -21,23 +18,15 @@ export async function GET(req: Request) {
       expand: ["payment_intent"],
     });
 
-    // ✅ Send email
-    const emailResult = await resend.emails.send({
-      from: "info@manchestermuridcommunity.org",
-      to: session.customer_email!,
-      subject: "Your Order Confirmation",
-      html: `
-        <h1>Thank you for your order!</h1>
-        <p>Order ID: ${session.metadata?.["Order ID"] ?? "N/A"}</p>
-        <p>Total Paid: £${session.metadata?.["Total Paid"] ?? "N/A"}</p>
-      `,
+    const paymentIntent = session.payment_intent as Stripe.PaymentIntent;
+    const metadata = paymentIntent?.metadata ?? {};
+
+    return NextResponse.json({
+      customer_email: session.customer_email,
+      metadata,
     });
-
-    console.log("✅ Email sent:", emailResult);
-
-    return NextResponse.json(session);
   } catch (err: any) {
-    console.error(err);
+    console.error("❌ Failed to retrieve session:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

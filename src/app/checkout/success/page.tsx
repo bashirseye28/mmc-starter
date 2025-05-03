@@ -71,10 +71,10 @@ const SuccessContent = () => {
             <strong>Email:</strong> {orderData.customer_email ?? "N/A"}
           </p>
           <p>
-            <strong>Total Paid:</strong> £
+            <strong>Total Paid:</strong>{" "}
             {orderData.metadata?.["Total Paid"]
-              ? parseFloat(orderData.metadata["Total Paid"]).toFixed(2)
-              : "0.00"}
+              ? `£${parseFloat(orderData.metadata["Total Paid"]).toFixed(2)}`
+              : "N/A"}
           </p>
         </div>
       )}
