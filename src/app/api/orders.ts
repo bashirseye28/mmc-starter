@@ -1,31 +1,18 @@
 // /src/app/api/orders/route.ts
 import { NextResponse } from "next/server";
-import admin from "firebase-admin";
-
-// ✅ Initialize Admin SDK once
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-    }),
-  });
-}
+import { db } from "@/app/lib/firebaseAdmin";
 
 export async function POST(req: Request) {
   try {
     const orderData = await req.json();
 
-    // ✅ Optional: Validate fields
     if (!orderData.orderId || !orderData.customerData?.name) {
       return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
     }
 
-    const db = admin.firestore();
     await db.collection("orders").doc(orderData.orderId).set({
       ...orderData,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: new Date(), // ✅ or admin.firestore.FieldValue.serverTimestamp()
     });
 
     console.log("✅ Order saved:", orderData.orderId);
