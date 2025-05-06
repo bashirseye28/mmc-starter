@@ -27,7 +27,7 @@ const CallToAction = () => {
 
         {/* ✅ CTA Button */}
         <div className="mt-8">
-          <Link href="/join">
+          <Link href="/volunteer">
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}

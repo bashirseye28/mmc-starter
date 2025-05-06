@@ -75,7 +75,7 @@ const GetInvolved = () => {
 
         {/* ✅ Call to Action Buttons */}
         <div className="mt-12 flex flex-col sm:flex-row justify-center gap-6">
-          <Link href="/get-involved">
+          <Link href="/volunteer">
             <motion.button
               className="px-6 py-3 bg-gold text-black font-semibold rounded-lg shadow-lg hover:bg-[#d4af37] transition flex items-center gap-2"
               whileHover={{ scale: 1.05, boxShadow: "0px 6px 14px rgba(255, 215, 0, 0.3)" }}

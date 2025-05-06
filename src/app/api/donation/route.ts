@@ -26,6 +26,8 @@ export async function POST(req: NextRequest) {
       donor_email: donorEmail,
       donation_amount: amount.toString(),
       donation_frequency: frequency,
+      
+      
     };
 
     let session;
