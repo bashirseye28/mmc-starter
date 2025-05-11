@@ -1,128 +1,138 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { motion } from "framer-motion";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowRight,
   faArrowLeft,
   faCheckCircle,
   faFilePdf,
-  faEnvelope,
-  faMoneyBillWave,
-  faCalendarAlt,
-  faUser,
-  faTag,
-} from '@fortawesome/free-solid-svg-icons';
-import jsPDF from 'jspdf';
-import Confetti from 'react-confetti';
+} from "@fortawesome/free-solid-svg-icons";
+import jsPDF from "jspdf";
+import Confetti from "react-confetti";
 
 export default function SuccessPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const sessionId = searchParams.get('session_id');
+  const sessionId = searchParams.get("session_id");
 
   const [donationDetails, setDonationDetails] = useState({
-    amount: 0,
-    frequency: 'One-time',
-    method: 'Unknown',
-    donorName: 'Anonymous',
-    donorEmail: 'Not Provided',
-    reference: 'General Donation',
-    date: new Date().toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
+    donorName: "Anonymous",
+    donorEmail: "Not Provided",
+    reference: "General Donation",
+    amount: 0.0,
+    frequency: "One-time",
+    method: "Unknown",
+    date: new Date().toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
     }),
   });
 
   useEffect(() => {
     if (!sessionId) return;
 
-    const fetchDonationDetails = async () => {
+    const fetchDetails = async () => {
       try {
-        const response = await fetch(`/api/daahira/donate?session_id=${sessionId}`);
-        const data = await response.json();
+        const res = await fetch(`/api/daahira/donate?session_id=${sessionId}`);
+        const data = await res.json();
 
-        if (response.ok) {
+        if (res.ok) {
+          const amount = data.amount_total
+            ? Number(data.amount_total) / 100
+            : parseFloat(data.donation_amount ?? "0");
+
           setDonationDetails({
-            amount: parseFloat(data.donation_amount || '0'),
-            frequency: data.donation_frequency || 'One-time',
-            method: data.payment_method_types || 'Card',
-            donorName: data.donor_name || 'Anonymous',
-            donorEmail: data.donor_email || 'Not Provided',
-            reference: data.donation_reference || 'General Donation',
-            date: new Date().toLocaleDateString('en-GB', {
-              day: '2-digit',
-              month: 'short',
-              year: 'numeric',
+            donorName: data.donor_name || "Anonymous",
+            donorEmail: data.donor_email || "Not Provided",
+            reference: data.donation_reference || data.donation_tier || "General Donation",
+            amount: parseFloat(amount.toFixed(2)),
+            frequency: data.donation_frequency || "One-time",
+            method: Array.isArray(data.payment_method_types)
+              ? data.payment_method_types[0]?.toUpperCase() || "Unknown"
+              : "Unknown",
+            date: new Date().toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "long",
+              year: "numeric",
             }),
           });
         } else {
-          console.error('Failed to fetch donation details:', data.error);
+          console.error("Failed to load session data:", data.error);
         }
-      } catch (error) {
-        console.error('Error fetching donation details:', error);
+      } catch (err) {
+        console.error("Error fetching donation details:", err);
       }
     };
 
-    fetchDonationDetails();
+    fetchDetails();
   }, [sessionId]);
 
   const generatePDF = async () => {
     const doc = new jsPDF();
-    const logoUrl = 'https://res.cloudinary.com/dnmoy5wua/image/upload/v1742051469/logo_ys5gk6.png';
+    const logoUrl =
+      "https://res.cloudinary.com/dnmoy5wua/image/upload/v1742051469/logo_ys5gk6.png";
 
-    const image = await fetch(logoUrl).then((res) => res.blob());
-    const imageData = await new Promise<string>((resolve) => {
+    const imgBlob = await fetch(logoUrl).then((res) => res.blob());
+    const base64 = await new Promise<string>((resolve) => {
       const reader = new FileReader();
       reader.onloadend = () => resolve(reader.result as string);
-      reader.readAsDataURL(image);
+      reader.readAsDataURL(imgBlob);
     });
 
-    doc.addImage(imageData, 'PNG', 80, 10, 50, 20);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(22);
-    doc.text('Donation Receipt', 105, 45, { align: 'center' });
-
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'normal');
+    doc.addImage(base64, "PNG", 85, 10, 40, 40);
     let y = 60;
-    const line = (label: string, value: string) => {
-      doc.text(`${label}:`, 20, y);
-      doc.text(value, 80, y);
-      y += 10;
-    };
-
-    line('Donor Name', donationDetails.donorName);
-    line('Donor Email', donationDetails.donorEmail);
-    line('Reference', donationDetails.reference);
-    line('Amount', `£${donationDetails.amount.toFixed(2)}`);
-    line('Frequency', donationDetails.frequency);
-    line('Payment Method', donationDetails.method);
-    line('Date', donationDetails.date);
+    doc.setFont("helvetica", "bold").setFontSize(18);
+    doc.text("Donation Receipt", 105, y, { align: "center" });
 
     y += 10;
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'italic');
-    doc.text('Thank you for your generous donation.', 20, y);
-    y += 7;
-    doc.text('May Allah reward you abundantly for your support.', 20, y);
+    doc.setDrawColor(180);
+    doc.line(20, y, 190, y);
+    y += 10;
 
-    y += 15;
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Manchester Murid Community', 20, y);
-    y += 7;
-    doc.setFont('helvetica', 'normal');
-    doc.text('Registered Charity No: 1194666', 20, y);
-    y += 7;
-    doc.text('info@manchestermuridcommunity.org', 20, y);
-    y += 7;
-    doc.text('+44 7541 475 547', 20, y);
+    const fields = [
+      ["Receipt No", sessionId?.slice(0, 10).toUpperCase() || "N/A"],
+      ["Donor Name", donationDetails.donorName],
+      ["Donor Email", donationDetails.donorEmail],
+      ["Reference", donationDetails.reference],
+      ["Amount", `£${donationDetails.amount.toFixed(2)}`],
+      ["Frequency", donationDetails.frequency],
+      ["Payment Method", donationDetails.method],
+      ["Date", donationDetails.date],
+    ];
 
-    doc.save('Donation_Receipt.pdf');
+    doc.setFont("courier", "normal").setFontSize(12);
+    fields.forEach(([label, value]) => {
+      doc.text(`${label}:`, 25, y);
+      doc.text(value, 90, y);
+      y += 8;
+    });
+
+    y += 5;
+    doc.setDrawColor(180);
+    doc.line(20, y, 190, y);
+    y += 10;
+
+    doc.setFont("times", "italic").setFontSize(11);
+    doc.text("May Allah reward you abundantly for your support.", 105, y, {
+      align: "center",
+    });
+
+    y += 12;
+    doc.setFont("helvetica", "bold").setFontSize(10);
+    doc.text("Manchester Murid Community", 105, y, { align: "center" });
+    y += 5;
+    doc.setFont("helvetica", "normal");
+    doc.text("Registered Charity No: 1194666", 105, y, { align: "center" });
+    y += 5;
+    doc.text("info@manchestermuridcommunity.org | +44 7541 475 547", 105, y, {
+      align: "center",
+    });
+
+    doc.save("MMC_Donation_Receipt.pdf");
   };
 
   return (
@@ -133,7 +143,7 @@ export default function SuccessPageContent() {
         <motion.div
           initial={{ scale: 0.5, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.8, ease: 'easeOut' }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
           className="text-primary"
         >
           <FontAwesomeIcon icon={faCheckCircle} className="text-6xl" />
@@ -156,13 +166,13 @@ export default function SuccessPageContent() {
             <span className="text-gold">Donation</span> Summary
           </h3>
 
-          <div className="mt-3 space-y-3 text-left">
+          <div className="mt-3 space-y-2 text-left font-body text-darkText">
             <p><strong>Donor:</strong> {donationDetails.donorName}</p>
             <p><strong>Email:</strong> {donationDetails.donorEmail}</p>
             <p><strong>Reference:</strong> {donationDetails.reference}</p>
             <p><strong>Amount:</strong> £{donationDetails.amount.toFixed(2)}</p>
             <p><strong>Frequency:</strong> {donationDetails.frequency}</p>
-            <p><strong>Method:</strong> {donationDetails.method}</p>
+            <p><strong>Payment Method:</strong> {donationDetails.method}</p>
             <p><strong>Date:</strong> {donationDetails.date}</p>
           </div>
         </motion.div>
@@ -175,7 +185,10 @@ export default function SuccessPageContent() {
         >
           <button
             onClick={generatePDF}
-            className="px-6 py-3 bg-gray-700 text-white font-semibold rounded-lg shadow-md hover:bg-gray-900 transition flex items-center justify-center gap-2"
+            disabled={!donationDetails.amount}
+            className={`px-6 py-3 ${
+              donationDetails.amount ? "bg-gray-700 hover:bg-gray-900" : "bg-gray-400 cursor-not-allowed"
+            } text-white font-semibold rounded-lg shadow-md transition flex items-center justify-center gap-2`}
           >
             <FontAwesomeIcon icon={faFilePdf} />
             Download Receipt (PDF)
@@ -189,15 +202,15 @@ export default function SuccessPageContent() {
           transition={{ duration: 0.8, delay: 0.5 }}
         >
           <button
-            onClick={() => router.push('/')}
+            onClick={() => router.push("/")}
             className="px-6 py-3 bg-primary text-white font-semibold rounded-lg shadow-md hover:bg-darkPrimary transition flex items-center justify-center gap-2"
           >
             <FontAwesomeIcon icon={faArrowLeft} />
             Return to Homepage
           </button>
           <button
-            onClick={() => router.push('/donate')}
-            className="px-6 py-3 bg-gold text-black font-semibold rounded-lg shadow-md hover:bg-[#d4af37] transition flex items-center justify-center gap-2"
+            onClick={() => router.push("/donate")}
+            className="px-6 py-3 bg-gold text-black font-semibold rounded-lg shadow-md hover:bg-yellow-400 transition flex items-center justify-center gap-2"
           >
             Donate Again
             <FontAwesomeIcon icon={faArrowRight} />

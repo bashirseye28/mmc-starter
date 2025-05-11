@@ -1,10 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { jaayanteTiers } from "@/data/jaayanteTiers";
 import { useParams } from "next/navigation";
 import { useState } from "react";
+import { jaayanteTiers } from "@/data/jaayanteTiers";
 
 const priceIds: Record<string, string> = {
   Sindiidi: "price_1R1ALk2M54cogX5dRpLwsrSl",
@@ -15,52 +14,49 @@ const priceIds: Record<string, string> = {
   Fathul_Fattah: "price_1R1AQQ2M54cogX5deCkcEJxm",
 };
 
-const getTierDetails = (tierSlug: string) => {
-  return jaayanteTiers.find((tier) => tier.slug === tierSlug);
-};
+const getTierDetails = (slug: string) =>
+  jaayanteTiers.find((tier) => tier.slug === slug);
 
 const JaayanteDonationPage = () => {
   const { tier } = useParams();
   const selectedTier = getTierDetails(tier as string);
+
   const [loading, setLoading] = useState(false);
   const [donorName, setDonorName] = useState("");
   const [email, setEmail] = useState("");
   const [anonymous, setAnonymous] = useState(false);
 
-  const handleProceedToPayment = async () => {
+  const handleProceed = async () => {
     if (!selectedTier) return;
 
     if (!anonymous && (!donorName.trim() || !email.trim())) {
-      alert("Please fill in all required fields or select 'Donate Anonymously'.");
-      return;
+      return alert("Please enter your name and email, or select anonymous.");
     }
 
     setLoading(true);
     try {
-      const response = await fetch("/api/stripe/jaayante-checkout", {
+      const res = await fetch("/api/stripe/jaayante-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tier: selectedTier.title,
+          amount: selectedTier.amount,
           priceId: priceIds[selectedTier.title],
           donorName: anonymous ? "Anonymous" : donorName.trim(),
           email: anonymous ? "donor@anonymous.com" : email.trim(),
           isAnonymous: anonymous,
-          amount: selectedTier.amount,
         }),
       });
 
-      const data = await response.json();
+      const data = await res.json();
       if (data.url) {
         window.location.href = data.url;
       } else {
-        console.error("Stripe session error:", data.error);
-        alert("Something went wrong. Please try again.");
-        setLoading(false);
+        throw new Error(data.error || "Checkout failed");
       }
-    } catch (error) {
-      console.error("Payment error:", error);
-      alert("Something went wrong while processing your donation.");
+    } catch (err) {
+      alert("Donation failed. Please try again.");
+      console.error(err);
       setLoading(false);
     }
   };
@@ -68,8 +64,8 @@ const JaayanteDonationPage = () => {
   if (!selectedTier) {
     return (
       <div className="text-center py-20">
-        <h2 className="text-3xl font-bold text-red-600">Invalid Jaayante Tier</h2>
-        <p className="text-lg text-gray-600 mt-2">Please select a valid Jaayante donation tier.</p>
+        <h2 className="text-3xl font-bold text-red-600">Invalid Tier</h2>
+        <p className="text-gray-600">Please choose a valid donation tier.</p>
       </div>
     );
   }
@@ -78,47 +74,45 @@ const JaayanteDonationPage = () => {
     <section className="py-20 bg-lightBg text-center">
       <div className="container mx-auto px-6 max-w-4xl">
         <motion.div
-          className="mb-12"
+          className="mb-10"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1 }}
+          transition={{ duration: 0.8 }}
         >
           <h1 className="text-4xl text-primary font-bold font-heading">
             Support <span className="text-gold">{selectedTier.title}</span>
           </h1>
-          <p className="text-lg text-darkText font-body mt-3 max-w-3xl mx-auto">
-            Your generous contribution of{" "}
-            <span className="text-gold font-semibold">£{selectedTier.amount}</span> will play a vital role in building{" "}
-            <span className="text-primary font-semibold">Keur Serigne Touba (KST)</span>.
+          <p className="mt-4 text-darkText max-w-2xl mx-auto">
+            Your donation of{" "}
+            <span className="text-gold font-semibold">£{selectedTier.amount}</span>{" "}
+            helps us build the <strong>Keur Serigne Touba</strong> centre.
           </p>
         </motion.div>
 
-        {/* ✅ Donor Info Form */}
         <div className="bg-white p-6 rounded-lg shadow-lg max-w-md mx-auto text-left">
           {!anonymous && (
             <>
-              <label htmlFor="name" className="text-sm font-medium text-gray-700">Full Name</label>
+              <label className="block text-sm font-medium text-gray-700">Full Name</label>
               <input
-                id="name"
                 type="text"
+                className="w-full mt-1 mb-4 border p-3 rounded-lg"
                 placeholder="Your Name"
                 value={donorName}
                 onChange={(e) => setDonorName(e.target.value)}
-                className="w-full p-3 border rounded-lg mb-4"
               />
-              <label htmlFor="email" className="text-sm font-medium text-gray-700">Email Address</label>
+
+              <label className="block text-sm font-medium text-gray-700">Email</label>
               <input
-                id="email"
                 type="email"
+                className="w-full mt-1 mb-4 border p-3 rounded-lg"
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full p-3 border rounded-lg mb-4"
               />
             </>
           )}
 
-          <label className="flex items-center gap-2 mb-4 text-sm text-gray-700 cursor-pointer">
+          <label className="flex items-center text-sm mb-4 gap-2">
             <input
               type="checkbox"
               checked={anonymous}
@@ -129,9 +123,9 @@ const JaayanteDonationPage = () => {
           </label>
 
           <button
-            className="mt-2 px-6 py-3 bg-gold text-black font-semibold rounded-lg hover:bg-yellow-500 transition w-full shadow-md"
-            onClick={handleProceedToPayment}
+            onClick={handleProceed}
             disabled={loading}
+            className="w-full bg-gold text-black font-semibold py-3 rounded-lg hover:bg-yellow-500 shadow-md transition"
           >
             {loading ? "Processing..." : `Donate £${selectedTier.amount}`}
           </button>
