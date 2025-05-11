@@ -1,13 +1,16 @@
-// /src/app/success/page.tsx
-"use client";
-
 import { Suspense } from "react";
-import SuccessContent from "./SuccessContent";
+import SuccessPage from "./SuccessPage";
 
-export default function SuccessPage() {
+export default function Success() {
   return (
-    <Suspense fallback={<p>Loading donation details...</p>}>
-      <SuccessContent />
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center text-center text-gray-600 text-lg">
+          Loading your receipt...
+        </div>
+      }
+    >
+      <SuccessPage />
     </Suspense>
   );
 }
