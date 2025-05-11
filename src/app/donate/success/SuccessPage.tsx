@@ -1,179 +1,205 @@
-"use client";
+'use client';
 
-import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import Image from "next/image";
-import { format } from "date-fns";
-import jsPDF from "jspdf";
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { motion } from 'framer-motion';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faArrowRight,
+  faArrowLeft,
+  faCheckCircle,
+  faFilePdf,
+  faEnvelope,
+  faMoneyBillWave,
+  faCalendarAlt,
+  faUser,
+  faTag,
+} from '@fortawesome/free-solid-svg-icons';
+import jsPDF from 'jspdf';
+import Confetti from 'react-confetti';
 
-export default function SuccessPage() {
+export default function SuccessPageContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const [donationDetails, setDonationDetails] = useState<{
-    donorName: string;
-    donorEmail: string;
-    donorPhone?: string;
-    cause: string;
-    amount: string;
-    date: string;
-  } | null>(null);
+  const sessionId = searchParams.get('session_id');
+
+  const [donationDetails, setDonationDetails] = useState({
+    amount: 0,
+    frequency: 'One-time',
+    method: 'Unknown',
+    donorName: 'Anonymous',
+    donorEmail: 'Not Provided',
+    reference: 'General Donation',
+    date: new Date().toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    }),
+  });
 
   useEffect(() => {
-    const donorName = searchParams.get("donor_name") || "Anonymous";
-    const donorEmail = searchParams.get("donor_email") || "donor@manchestermuridcommunity.org";
-    const donorPhone = searchParams.get("donor_phone") || "N/A";
-    const cause = searchParams.get("cause") || "General Donation";
-    const amount = searchParams.get("amount") || "10.00";
-    const date = format(new Date(), "PPPpp");
+    if (!sessionId) return;
 
-    setDonationDetails({
-      donorName,
-      donorEmail,
-      donorPhone,
-      cause,
-      amount,
-      date,
-    });
-  }, [searchParams]);
+    const fetchDonationDetails = async () => {
+      try {
+        const response = await fetch(`/api/daahira/donate?session_id=${sessionId}`);
+        const data = await response.json();
 
-  const handleDownload = async () => {
-    if (!donationDetails) return;
+        if (response.ok) {
+          setDonationDetails({
+            amount: parseFloat(data.donation_amount || '0'),
+            frequency: data.donation_frequency || 'One-time',
+            method: data.payment_method_types || 'Card',
+            donorName: data.donor_name || 'Anonymous',
+            donorEmail: data.donor_email || 'Not Provided',
+            reference: data.donation_reference || 'General Donation',
+            date: new Date().toLocaleDateString('en-GB', {
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric',
+            }),
+          });
+        } else {
+          console.error('Failed to fetch donation details:', data.error);
+        }
+      } catch (error) {
+        console.error('Error fetching donation details:', error);
+      }
+    };
 
+    fetchDonationDetails();
+  }, [sessionId]);
+
+  const generatePDF = () => {
     const doc = new jsPDF();
+    const logoUrl = 'https://res.cloudinary.com/dnmoy5wua/image/upload/v1742051469/logo_ys5gk6.png';
 
-    const logoUrl = "/images/logo.png";
-    const logoImg = await fetch(logoUrl)
-      .then((res) => res.blob())
-      .then(
-        (blob) =>
-          new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.readAsDataURL(blob);
-          })
-      );
+    doc.addImage(logoUrl, 'PNG', 80, 10, 50, 20);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(22);
+    doc.text('Donation Receipt', 20, 45);
 
-    doc.addImage(logoImg as string, "PNG", 85, 10, 40, 40);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Donor Name: ${donationDetails.donorName}`, 20, 60);
+    doc.text(`Donor Email: ${donationDetails.donorEmail}`, 20, 70);
+    doc.text(`Reference: ${donationDetails.reference}`, 20, 80);
+    doc.text(`Donation Amount: £${donationDetails.amount}`, 20, 90);
+    doc.text(`Donation Frequency: ${donationDetails.frequency}`, 20, 100);
+    doc.text(`Payment Method: ${donationDetails.method}`, 20, 110);
+    doc.text(`Date: ${donationDetails.date}`, 20, 120);
 
-    let y = 60;
-    doc.setFontSize(20).setFont("helvetica", "bold");
-    doc.text("Donation Receipt", 105, y, { align: "center" });
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'italic');
+    doc.text('Thank you for your generous donation!', 20, 140);
+    doc.text('Manchester Murid Community', 20, 150);
+    doc.setFont('helvetica', 'normal');
+    doc.text('info@manchestermuridcommunity.org', 20, 165);
+    doc.text('+44 7541 475 547', 20, 175);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Registered Charity No: 1194666', 20, 160);
 
-    y += 15;
-    doc.setFontSize(18).text("Manchester Murid Community", 20, y);
-
-    y += 9;
-    doc.setFontSize(12).setFont("helvetica", "normal");
-    doc.text("Charity No: 1194666", 20, y);
-    y += 7;
-    doc.text("Email: contact@manchestermuridcommunity.org", 20, y);
-    y += 7;
-    doc.text("Website: https://manchestermuridcommunity.org", 20, y);
-
-    y += 10;
-    doc.setLineWidth(0.5);
-    doc.line(20, y, 190, y);
-
-    y += 15;
-    doc.setFont("helvetica", "bold").text("Donor Information:", 20, y);
-    y += 8;
-    doc.setFont("helvetica", "normal");
-    doc.text(`Name: ${donationDetails.donorName}`, 20, y);
-    y += 7;
-    doc.text(`Email: ${donationDetails.donorEmail}`, 20, y);
-    y += 7;
-    doc.text(`Phone: ${donationDetails.donorPhone}`, 20, y);
-
-    y += 10;
-    doc.setFont("helvetica", "bold").text("Donation Details:", 20, y);
-    y += 8;
-    doc.setFont("helvetica", "normal");
-    doc.text(`Cause: ${donationDetails.cause}`, 20, y);
-    y += 7;
-    doc.text(`Amount: £${donationDetails.amount}`, 20, y);
-    y += 7;
-    doc.text(`Date: ${donationDetails.date}`, 20, y);
-
-    y += 15;
-    doc.setLineWidth(0.3);
-    doc.line(20, y, 190, y);
-
-    y += 12;
-    doc.setFontSize(11).setFont("times", "italic");
-    doc.text("May Allah reward you abundantly for your generosity.", 105, y, {
-      align: "center",
-    });
-
-    y += 15;
-    doc.setFontSize(9).setFont("helvetica", "normal");
-    doc.text(
-      "This is your official donation receipt. Thank you for supporting Manchester Murid Community.",
-      105,
-      y,
-      { align: "center" }
-    );
-
-    doc.save("mmc-donation-receipt.pdf");
+    doc.save('Donation_Receipt.pdf');
   };
 
-  if (!donationDetails) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-center px-6">
-        <p className="text-gray-600 text-lg">Loading your receipt...</p>
-      </div>
-    );
-  }
-
   return (
-    <section className="py-16 px-6 bg-lightBg min-h-screen flex flex-col items-center justify-center text-center">
-      <div className="bg-white border shadow-xl rounded-2xl p-8 max-w-xl w-full relative">
-        <div className="flex justify-center mb-6">
-          <Image
-            src="/images/logo.png"
-            alt="Manchester Murid Community Logo"
-            width={100}
-            height={100}
-            className="object-contain"
-          />
-        </div>
+    <main className="min-h-screen flex items-center justify-center bg-gray-50 px-6 relative">
+      <Confetti recycle={false} numberOfPieces={300} />
 
-        <h1 className="text-3xl font-bold text-primary mb-2">
-          Thank You for Your Donation!
-        </h1>
-        <p className="text-gray-700 mb-6 font-body">
-          May Allah reward you abundantly. If you have any questions, feel free to{" "}
-          <a
-            href="mailto:contact@manchestermuridcommunity.org"
-            className="underline text-primary hover:text-gold transition"
-          >
-            contact us
-          </a>
-          .
+      <div className="bg-white shadow-xl p-10 rounded-lg text-center max-w-lg border border-gray-200">
+        <motion.div
+          initial={{ scale: 0.5, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
+          className="text-primary"
+        >
+          <FontAwesomeIcon icon={faCheckCircle} className="text-6xl" />
+        </motion.div>
+
+        <h2 className="text-3xl font-bold text-primary mt-4">
+          Thank You for Your <span className="text-gold">Generosity!</span>
+        </h2>
+        <p className="text-gray-600 mt-2">
+          Your donation is making a real difference. We deeply appreciate your support!
         </p>
 
-        <div className="text-left text-sm text-gray-800 font-body space-y-3 border-t pt-4">
-          <p><strong>Donor Name:</strong> {donationDetails.donorName}</p>
-          <p><strong>Email:</strong> {donationDetails.donorEmail}</p>
-          <p><strong>Phone:</strong> {donationDetails.donorPhone}</p>
-          <p><strong>Cause:</strong> {donationDetails.cause}</p>
-          <p><strong>Amount:</strong> £{donationDetails.amount}</p>
-          <p><strong>Date:</strong> {donationDetails.date}</p>
-        </div>
+        <motion.div
+          className="mt-6 bg-white p-5 rounded-lg border shadow-lg"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+        >
+          <h3 className="text-xl font-semibold text-primary text-center">
+            <span className="text-gold">Donation</span> Summary
+          </h3>
 
-        <div className="flex justify-center gap-4 mt-6">
+          <div className="mt-3 space-y-3">
+            <p className="text-lg font-semibold text-primary flex items-center gap-2">
+              <FontAwesomeIcon icon={faUser} className="text-gold" />
+              Donor: <span className="text-darkText">{donationDetails.donorName}</span>
+            </p>
+            <p className="text-lg font-semibold text-primary flex items-center gap-2">
+              <FontAwesomeIcon icon={faEnvelope} className="text-gold" />
+              Email: <span className="text-darkText">{donationDetails.donorEmail}</span>
+            </p>
+            <p className="text-lg font-semibold text-primary flex items-center gap-2">
+              <FontAwesomeIcon icon={faTag} className="text-gold" />
+              Reference: <span className="text-darkText">{donationDetails.reference}</span>
+            </p>
+            <p className="text-lg font-semibold text-primary flex items-center gap-2">
+              <FontAwesomeIcon icon={faMoneyBillWave} className="text-gold" />
+              Amount: <span className="text-primary font-bold">£{donationDetails.amount}</span>
+            </p>
+            <p className="text-lg font-semibold text-primary flex items-center gap-2">
+              <FontAwesomeIcon icon={faCalendarAlt} className="text-gold" />
+              Frequency: <span className="text-darkText">{donationDetails.frequency}</span>
+            </p>
+            <p className="text-lg font-semibold text-primary flex items-center gap-2">
+              Payment Method: <span className="text-darkText capitalize">{donationDetails.method}</span>
+            </p>
+            <p className="text-lg font-semibold text-primary flex items-center gap-2">
+              Date: <span className="text-darkText">{donationDetails.date}</span>
+            </p>
+          </div>
+        </motion.div>
+
+        <motion.div
+          className="mt-6 flex justify-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.5 }}
+        >
           <button
-            onClick={handleDownload}
-            className="bg-primary text-white px-6 py-2 rounded-md text-sm font-semibold hover:bg-[#005f5f] transition"
+            onClick={generatePDF}
+            className="px-6 py-3 bg-gray-700 text-white font-semibold rounded-lg shadow-md hover:bg-gray-900 transition flex items-center justify-center gap-2"
           >
-            Download Receipt
+            <FontAwesomeIcon icon={faFilePdf} />
+            Download Receipt (PDF)
           </button>
-          <a
-            href="/"
-            className="inline-block bg-gray-100 border px-6 py-2 rounded-md text-sm font-semibold hover:bg-gray-200 transition"
+        </motion.div>
+
+        <motion.div
+          className="mt-6 flex flex-col sm:flex-row justify-center gap-4"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.5 }}
+        >
+          <button
+            onClick={() => router.push('/')}
+            className="px-6 py-3 bg-primary text-white font-semibold rounded-lg shadow-md hover:bg-darkPrimary transition flex items-center justify-center gap-2"
           >
-            Return Home
-          </a>
-        </div>
+            <FontAwesomeIcon icon={faArrowLeft} />
+            Return to Homepage
+          </button>
+          <button
+            onClick={() => router.push('/donate')}
+            className="px-6 py-3 bg-gold text-black font-semibold rounded-lg shadow-md hover:bg-[#d4af37] transition flex items-center justify-center gap-2"
+          >
+            Donate Again
+            <FontAwesomeIcon icon={faArrowRight} />
+          </button>
+        </motion.div>
       </div>
-    </section>
+    </main>
   );
 }

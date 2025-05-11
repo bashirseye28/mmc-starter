@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
 
-// Suggested donation amounts
 const suggestedAmounts = [
   { amount: 10, description: "Help sponsor a Madrassah student’s learning materials." },
   { amount: 15, description: "Weekly Iftaar Contribution." },
@@ -16,8 +15,8 @@ const suggestedAmounts = [
 ];
 
 interface CustomAmountProps {
-  onProceed: (amount: number) => void; // ✅ Ensures it receives the correct amount
-  onSelectAmount: (amount: number) => void; // ✅ Handles only numbers
+  onProceed: (amount: number, reference: string) => void;
+  onSelectAmount: (amount: number) => void;
   onCustomAmountChange: (amount: string) => void;
   selectedAmount: number | null;
   customAmount: string;
@@ -32,36 +31,48 @@ const CustomAmount: React.FC<CustomAmountProps> = ({
 }) => {
   const [localSelectedAmount, setLocalSelectedAmount] = useState<number | null>(null);
   const [localCustomAmount, setLocalCustomAmount] = useState<string>("");
+  const [localCustomReference, setLocalCustomReference] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
 
-  // ✅ Handle predefined donation amount selection
   const handleSelectAmount = (amount: number) => {
     setLocalSelectedAmount(amount);
-    setLocalCustomAmount(""); // Reset custom input when selecting a suggested amount
+    setLocalCustomAmount("");
+    setLocalCustomReference("");
+    setError(null);
     onSelectAmount(amount);
   };
 
-  // ✅ Handle custom donation amount input
   const handleCustomAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLocalSelectedAmount(null); // Deselect predefined tiers when typing a custom amount
+    setLocalSelectedAmount(null);
     setLocalCustomAmount(e.target.value);
     onCustomAmountChange(e.target.value);
   };
 
-  // ✅ Handle clicking "Continue to Payment" (Proceeding to next step)
   const handleProceed = () => {
     const finalAmount = localSelectedAmount || parseFloat(localCustomAmount) || 0;
+
+    const reference = localSelectedAmount
+      ? suggestedAmounts.find((tier) => tier.amount === localSelectedAmount)?.description || "General Donation"
+      : localCustomReference.trim();
+
+    // ✅ Ensure reference is required for custom amounts
+    if (!localSelectedAmount && (!reference || reference.length < 3)) {
+      setError("Please provide a valid donation reference.");
+      return;
+    }
+
+    setError(null);
+
     if (finalAmount > 0) {
-      onProceed(finalAmount); // 🔄 Sends the selected amount to the next step
+      onProceed(finalAmount, reference);
     }
   };
 
-  // ✅ Condition to enable/disable the button
   const isValidAmount = localSelectedAmount || (localCustomAmount && parseFloat(localCustomAmount) > 0);
 
   return (
     <section id="choose-amount" className="py-16 bg-lightBg text-center">
       <div className="container mx-auto px-6 max-w-3xl">
-        {/* ✅ Title Section */}
         <h2 className="text-3xl sm:text-4xl font-bold font-heading">
           <span className="text-primary">Choose Your</span>{" "}
           <span className="text-gold">Donation Amount</span>
@@ -70,7 +81,6 @@ const CustomAmount: React.FC<CustomAmountProps> = ({
           Support our community with a one-time donation or a custom amount that suits you.
         </p>
 
-        {/* ✅ Suggested Donation Amounts */}
         <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 gap-4">
           {suggestedAmounts.map((tier) => (
             <motion.div
@@ -84,7 +94,6 @@ const CustomAmount: React.FC<CustomAmountProps> = ({
               whileTap={{ scale: 0.95 }}
               onClick={() => handleSelectAmount(tier.amount)}
             >
-              {/* ✅ Checkmark Icon for Selected Amount */}
               {localSelectedAmount === tier.amount && (
                 <FontAwesomeIcon icon={faCheck} className="text-lg text-primary mb-1" />
               )}
@@ -94,7 +103,7 @@ const CustomAmount: React.FC<CustomAmountProps> = ({
           ))}
         </div>
 
-        {/* ✅ Custom Donation Amount */}
+        {/* Custom Amount */}
         <div className="mt-8">
           <label className="text-lg font-semibold text-darkText block mb-3">
             Enter a Custom Amount:
@@ -112,18 +121,34 @@ const CustomAmount: React.FC<CustomAmountProps> = ({
           </div>
         </div>
 
-        {/* ✅ Proceed to Payment Button (Will Redirect to Next Step) */}
+        {/* Reference input (only when custom amount selected) */}
+        {!localSelectedAmount && (
+          <div className="mt-6 max-w-xs mx-auto">
+            <label className="block text-sm font-semibold text-darkText mb-2">
+              What would you like this donation to go toward?{" "}
+              <span className="text-gray-500 font-normal">(Required – used as reference)</span>
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Zakat, KST Project, In memory of..."
+              className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm focus:ring-gold focus:border-gold"
+              value={localCustomReference}
+              onChange={(e) => setLocalCustomReference(e.target.value)}
+            />
+            {error && <p className="text-sm text-red-600 mt-1">{error}</p>}
+          </div>
+        )}
+
         <div className="mt-6 flex justify-center">
           <motion.button
             className={`px-8 py-3 rounded-lg text-white font-semibold shadow-md transition flex items-center justify-center gap-2 ${
               isValidAmount ? "bg-primary hover:bg-darkPrimary" : "bg-gray-400 cursor-not-allowed"
             }`}
-            disabled={!isValidAmount} // Prevents proceeding if no valid amount is entered
+            disabled={!isValidAmount}
             onClick={handleProceed}
             whileHover={{ scale: isValidAmount ? 1.05 : 1 }}
             whileTap={{ scale: isValidAmount ? 0.95 : 1 }}
           >
-            {/* ✅ faCheck icon only when a valid amount is selected */}
             {isValidAmount && <FontAwesomeIcon icon={faCheck} className="text-white" />}
             Continue to Payment
           </motion.button>
