@@ -70,34 +70,57 @@ export default function SuccessPageContent() {
     fetchDonationDetails();
   }, [sessionId]);
 
-  const generatePDF = () => {
+  const generatePDF = async () => {
     const doc = new jsPDF();
     const logoUrl = 'https://res.cloudinary.com/dnmoy5wua/image/upload/v1742051469/logo_ys5gk6.png';
 
-    doc.addImage(logoUrl, 'PNG', 80, 10, 50, 20);
+    const image = await fetch(logoUrl).then((res) => res.blob());
+    const imageData = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(image);
+    });
+
+    doc.addImage(imageData, 'PNG', 80, 10, 50, 20);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(22);
-    doc.text('Donation Receipt', 20, 45);
+    doc.text('Donation Receipt', 105, 45, { align: 'center' });
 
     doc.setFontSize(14);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Donor Name: ${donationDetails.donorName}`, 20, 60);
-    doc.text(`Donor Email: ${donationDetails.donorEmail}`, 20, 70);
-    doc.text(`Reference: ${donationDetails.reference}`, 20, 80);
-    doc.text(`Donation Amount: £${donationDetails.amount}`, 20, 90);
-    doc.text(`Donation Frequency: ${donationDetails.frequency}`, 20, 100);
-    doc.text(`Payment Method: ${donationDetails.method}`, 20, 110);
-    doc.text(`Date: ${donationDetails.date}`, 20, 120);
+    let y = 60;
+    const line = (label: string, value: string) => {
+      doc.text(`${label}:`, 20, y);
+      doc.text(value, 80, y);
+      y += 10;
+    };
 
-    doc.setFontSize(12);
+    line('Donor Name', donationDetails.donorName);
+    line('Donor Email', donationDetails.donorEmail);
+    line('Reference', donationDetails.reference);
+    line('Amount', `£${donationDetails.amount.toFixed(2)}`);
+    line('Frequency', donationDetails.frequency);
+    line('Payment Method', donationDetails.method);
+    line('Date', donationDetails.date);
+
+    y += 10;
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'italic');
-    doc.text('Thank you for your generous donation!', 20, 140);
-    doc.text('Manchester Murid Community', 20, 150);
-    doc.setFont('helvetica', 'normal');
-    doc.text('info@manchestermuridcommunity.org', 20, 165);
-    doc.text('+44 7541 475 547', 20, 175);
+    doc.text('Thank you for your generous donation.', 20, y);
+    y += 7;
+    doc.text('May Allah reward you abundantly for your support.', 20, y);
+
+    y += 15;
+    doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.text('Registered Charity No: 1194666', 20, 160);
+    doc.text('Manchester Murid Community', 20, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.text('Registered Charity No: 1194666', 20, y);
+    y += 7;
+    doc.text('info@manchestermuridcommunity.org', 20, y);
+    y += 7;
+    doc.text('+44 7541 475 547', 20, y);
 
     doc.save('Donation_Receipt.pdf');
   };
@@ -133,33 +156,14 @@ export default function SuccessPageContent() {
             <span className="text-gold">Donation</span> Summary
           </h3>
 
-          <div className="mt-3 space-y-3">
-            <p className="text-lg font-semibold text-primary flex items-center gap-2">
-              <FontAwesomeIcon icon={faUser} className="text-gold" />
-              Donor: <span className="text-darkText">{donationDetails.donorName}</span>
-            </p>
-            <p className="text-lg font-semibold text-primary flex items-center gap-2">
-              <FontAwesomeIcon icon={faEnvelope} className="text-gold" />
-              Email: <span className="text-darkText">{donationDetails.donorEmail}</span>
-            </p>
-            <p className="text-lg font-semibold text-primary flex items-center gap-2">
-              <FontAwesomeIcon icon={faTag} className="text-gold" />
-              Reference: <span className="text-darkText">{donationDetails.reference}</span>
-            </p>
-            <p className="text-lg font-semibold text-primary flex items-center gap-2">
-              <FontAwesomeIcon icon={faMoneyBillWave} className="text-gold" />
-              Amount: <span className="text-primary font-bold">£{donationDetails.amount}</span>
-            </p>
-            <p className="text-lg font-semibold text-primary flex items-center gap-2">
-              <FontAwesomeIcon icon={faCalendarAlt} className="text-gold" />
-              Frequency: <span className="text-darkText">{donationDetails.frequency}</span>
-            </p>
-            <p className="text-lg font-semibold text-primary flex items-center gap-2">
-              Payment Method: <span className="text-darkText capitalize">{donationDetails.method}</span>
-            </p>
-            <p className="text-lg font-semibold text-primary flex items-center gap-2">
-              Date: <span className="text-darkText">{donationDetails.date}</span>
-            </p>
+          <div className="mt-3 space-y-3 text-left">
+            <p><strong>Donor:</strong> {donationDetails.donorName}</p>
+            <p><strong>Email:</strong> {donationDetails.donorEmail}</p>
+            <p><strong>Reference:</strong> {donationDetails.reference}</p>
+            <p><strong>Amount:</strong> £{donationDetails.amount.toFixed(2)}</p>
+            <p><strong>Frequency:</strong> {donationDetails.frequency}</p>
+            <p><strong>Method:</strong> {donationDetails.method}</p>
+            <p><strong>Date:</strong> {donationDetails.date}</p>
           </div>
         </motion.div>
 
