@@ -51,14 +51,17 @@ const CustomAmount: React.FC<CustomAmountProps> = ({
   const handleProceed = () => {
     const finalAmount = localSelectedAmount || parseFloat(localCustomAmount) || 0;
 
-    const reference = localSelectedAmount
-      ? suggestedAmounts.find((tier) => tier.amount === localSelectedAmount)?.description || "General Donation"
-      : localCustomReference.trim();
+    let reference = "";
 
-    // ✅ Ensure reference is required for custom amounts
-    if (!localSelectedAmount && (!reference || reference.length < 3)) {
-      setError("Please provide a valid donation reference.");
-      return;
+    if (localSelectedAmount) {
+      const match = suggestedAmounts.find((tier) => tier.amount === localSelectedAmount);
+      reference = match?.description || "General Donation";
+    } else {
+      reference = localCustomReference.trim();
+      if (!reference || reference.length < 3) {
+        setError("Please provide a valid donation reference.");
+        return;
+      }
     }
 
     setError(null);
