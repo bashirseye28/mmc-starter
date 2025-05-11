@@ -17,10 +17,12 @@ export async function POST(req: NextRequest) {
     }
 
     const donorName = name?.trim() || "Anonymous Donor";
-    const donorEmail = email?.trim() || "not_provided@mmc.org";
+    const donorEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+      ? email.trim()
+      : "not_provided@mmc.org";
+
     const donationReference = reference.trim();
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://manchestermuridcommunity.org";
-
     const receiptId = `DON-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 
     const metadata = {
@@ -30,8 +32,9 @@ export async function POST(req: NextRequest) {
       donation_amount: amount.toString(),
       donation_frequency: frequency,
       donation_reference: donationReference,
-      donation_tier: donationReference, // ✅ Include for UI fallback
-      donation_date: new Date().toLocaleString("en-GB", { timeZone: "Europe/London" }),
+      donation_date: new Date().toLocaleString("en-GB", {
+        timeZone: "Europe/London",
+      }),
     };
 
     let session;
@@ -151,7 +154,6 @@ export async function GET(req: NextRequest) {
       donor_name: metadata.donor_name,
       donor_email: metadata.donor_email,
       donation_reference: metadata.donation_reference,
-      donation_tier: metadata.donation_tier,
       donation_amount: metadata.donation_amount,
       donation_frequency: metadata.donation_frequency,
       donation_date: metadata.donation_date,

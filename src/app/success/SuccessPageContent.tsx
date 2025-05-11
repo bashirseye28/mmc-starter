@@ -29,7 +29,7 @@ export default function SuccessPageContent() {
     method: 'Unknown',
     donorName: 'Anonymous',
     donorEmail: 'Not Provided',
-    reference: 'Custom Donation',
+    reference: '',
     date: new Date().toLocaleDateString('en-GB', {
       day: '2-digit',
       month: 'long',
@@ -55,7 +55,7 @@ export default function SuccessPageContent() {
               : 'Unknown',
             donorName: data.donor_name || 'Anonymous',
             donorEmail: data.donor_email || 'Not Provided',
-            reference: data.donation_reference || 'Custom Donation',
+            reference: data.donation_reference?.trim() || 'Unspecified',
             date: new Date().toLocaleDateString('en-GB', {
               day: '2-digit',
               month: 'long',
@@ -84,7 +84,6 @@ export default function SuccessPageContent() {
       reader.readAsDataURL(imgBlob);
     });
 
-    // Header logo and title
     doc.addImage(base64, 'PNG', 85, 10, 40, 40);
     let y = 60;
     doc.setFont('helvetica', 'bold').setFontSize(18);
