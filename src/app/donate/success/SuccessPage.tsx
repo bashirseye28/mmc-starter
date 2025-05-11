@@ -22,7 +22,7 @@ export default function SuccessPageContent() {
     receiptId: "",
     donorName: "Anonymous",
     donorEmail: "Not Provided",
-    reference: "General Donation",
+    reference: "Unknown Tier",
     amount: 0.0,
     frequency: "One-time",
     method: "Unknown",
@@ -47,10 +47,11 @@ export default function SuccessPageContent() {
             : parseFloat(data.donation_amount ?? "0");
 
           setDonationDetails({
-            receiptId: data.receipt_id || sessionId?.slice(0, 10).toUpperCase() || "N/A",
+            receiptId: data.receipt_id || sessionId.slice(0, 10).toUpperCase(),
             donorName: data.donor_name || "Anonymous",
             donorEmail: data.donor_email || "Not Provided",
-            reference: data.donation_reference || "General Donation",
+            reference:
+              data.donation_reference || data.donation_tier || "Unknown Tier",
             amount: parseFloat(amount.toFixed(2)),
             frequency: data.donation_frequency || "One-time",
             method: Array.isArray(data.payment_method_types)
@@ -87,6 +88,7 @@ export default function SuccessPageContent() {
 
     doc.addImage(base64, "PNG", 85, 10, 40, 40);
     let y = 60;
+
     doc.setFont("helvetica", "bold").setFontSize(18);
     doc.text("Donation Receipt", 105, y, { align: "center" });
 
@@ -99,7 +101,7 @@ export default function SuccessPageContent() {
       ["Receipt ID", donationDetails.receiptId],
       ["Donor Name", donationDetails.donorName],
       ["Donor Email", donationDetails.donorEmail],
-      ["Reference", donationDetails.reference],
+      ["Donation Tier", donationDetails.reference],
       ["Amount", `£${donationDetails.amount.toFixed(2)}`],
       ["Frequency", donationDetails.frequency],
       ["Payment Method", donationDetails.method],
@@ -155,7 +157,8 @@ export default function SuccessPageContent() {
           Thank You for Your <span className="text-gold">Generosity!</span>
         </h2>
         <p className="text-gray-600 mt-2">
-          Your donation is making a real difference. We deeply appreciate your support!
+          Your donation is making a real difference. We deeply appreciate your
+          support!
         </p>
 
         <motion.div
@@ -172,7 +175,7 @@ export default function SuccessPageContent() {
             <p><strong>Receipt ID:</strong> {donationDetails.receiptId}</p>
             <p><strong>Donor:</strong> {donationDetails.donorName}</p>
             <p><strong>Email:</strong> {donationDetails.donorEmail}</p>
-            <p><strong>Reference:</strong> {donationDetails.reference}</p>
+            <p><strong>Donation Tier:</strong> {donationDetails.reference}</p>
             <p><strong>Amount:</strong> £{donationDetails.amount.toFixed(2)}</p>
             <p><strong>Frequency:</strong> {donationDetails.frequency}</p>
             <p><strong>Payment Method:</strong> {donationDetails.method}</p>

@@ -1,4 +1,3 @@
-// /src/app/api/daahira/donate/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
@@ -7,7 +6,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 // -------------------
-// POST: Create Session
+// POST: Create Stripe Session
 // -------------------
 export async function POST(req: NextRequest) {
   try {
@@ -21,6 +20,7 @@ export async function POST(req: NextRequest) {
     const donorEmail = email?.trim() || "not_provided@mmc.org";
     const donationReference = reference.trim();
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://manchestermuridcommunity.org";
+
     const receiptId = `DON-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 
     const metadata = {
@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
       donation_amount: amount.toString(),
       donation_frequency: frequency,
       donation_reference: donationReference,
+      donation_tier: donationReference, // ✅ Include for UI fallback
       donation_date: new Date().toLocaleString("en-GB", { timeZone: "Europe/London" }),
     };
 
@@ -117,7 +118,7 @@ export async function POST(req: NextRequest) {
 }
 
 // -------------------
-// GET: Retrieve Receipt Info
+// GET: Retrieve Donation Receipt Data
 // -------------------
 export async function GET(req: NextRequest) {
   const sessionId = req.nextUrl.searchParams.get("session_id");
@@ -140,7 +141,10 @@ export async function GET(req: NextRequest) {
     };
 
     const amount_total =
-      session.amount_total || paymentIntent?.amount || subscription?.items.data[0]?.price.unit_amount || 0;
+      session.amount_total ||
+      paymentIntent?.amount ||
+      (subscription?.items.data[0]?.price.unit_amount ?? 0) *
+        (subscription?.items.data[0]?.quantity ?? 1);
 
     return NextResponse.json({
       amount_total,

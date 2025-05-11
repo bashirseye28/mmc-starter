@@ -5,11 +5,13 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-02-24.acacia",
 });
 
+// -------------------
+// POST: Create Stripe Session
+// -------------------
 export async function POST(req: NextRequest) {
   try {
     const { name, email, amount, frequency, reference } = await req.json();
 
-    // ✅ Validate input
     if (!amount || !frequency || !email || !reference?.trim()) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
@@ -19,7 +21,6 @@ export async function POST(req: NextRequest) {
     const donationReference = reference.trim();
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://manchestermuridcommunity.org";
 
-    // ✅ Generate unique receipt ID
     const receiptId = `DON-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 
     const metadata = {
@@ -29,13 +30,13 @@ export async function POST(req: NextRequest) {
       donation_amount: amount.toString(),
       donation_frequency: frequency,
       donation_reference: donationReference,
+      donation_tier: donationReference, // ✅ Include for UI fallback
       donation_date: new Date().toLocaleString("en-GB", { timeZone: "Europe/London" }),
     };
 
     let session;
 
     if (frequency === "one-time") {
-      // ✅ One-time donation (payment)
       session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
         customer_email: donorEmail,
@@ -59,7 +60,6 @@ export async function POST(req: NextRequest) {
         cancel_url: `${baseUrl}/donate?canceled=true`,
       });
     } else {
-      // ✅ Recurring donation (subscription)
       const priceMap: Record<string, Record<string, string>> = {
         "10": {
           weekly: process.env.PRICE_10_WEEKLY!,
@@ -114,5 +114,52 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error("❌ Stripe Checkout Error:", error.message || error);
     return NextResponse.json({ error: "Stripe session creation failed" }, { status: 500 });
+  }
+}
+
+// -------------------
+// GET: Retrieve Donation Receipt Data
+// -------------------
+export async function GET(req: NextRequest) {
+  const sessionId = req.nextUrl.searchParams.get("session_id");
+  if (!sessionId) {
+    return NextResponse.json({ error: "Missing session_id" }, { status: 400 });
+  }
+
+  try {
+    const session = await stripe.checkout.sessions.retrieve(sessionId, {
+      expand: ["payment_intent", "subscription"],
+    });
+
+    const paymentIntent = session.payment_intent as Stripe.PaymentIntent | null;
+    const subscription = session.subscription as Stripe.Subscription | null;
+
+    const metadata = {
+      ...session.metadata,
+      ...(paymentIntent?.metadata || {}),
+      ...(subscription?.metadata || {}),
+    };
+
+    const amount_total =
+      session.amount_total ||
+      paymentIntent?.amount ||
+      (subscription?.items.data[0]?.price.unit_amount ?? 0) *
+        (subscription?.items.data[0]?.quantity ?? 1);
+
+    return NextResponse.json({
+      amount_total,
+      donor_name: metadata.donor_name,
+      donor_email: metadata.donor_email,
+      donation_reference: metadata.donation_reference,
+      donation_tier: metadata.donation_tier,
+      donation_amount: metadata.donation_amount,
+      donation_frequency: metadata.donation_frequency,
+      donation_date: metadata.donation_date,
+      payment_method_types: session.payment_method_types,
+      receipt_id: metadata.receipt_id,
+    });
+  } catch (err: any) {
+    console.error("❌ Failed to retrieve session:", err.message || err);
+    return NextResponse.json({ error: "Session not found" }, { status: 404 });
   }
 }
