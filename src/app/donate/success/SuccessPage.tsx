@@ -19,6 +19,7 @@ export default function SuccessPageContent() {
   const sessionId = searchParams.get("session_id");
 
   const [donationDetails, setDonationDetails] = useState({
+    receiptId: "",
     donorName: "Anonymous",
     donorEmail: "Not Provided",
     reference: "General Donation",
@@ -46,9 +47,10 @@ export default function SuccessPageContent() {
             : parseFloat(data.donation_amount ?? "0");
 
           setDonationDetails({
+            receiptId: data.receipt_id || sessionId?.slice(0, 10).toUpperCase() || "N/A",
             donorName: data.donor_name || "Anonymous",
             donorEmail: data.donor_email || "Not Provided",
-            reference: data.donation_reference || data.donation_tier || "General Donation",
+            reference: data.donation_reference || "General Donation",
             amount: parseFloat(amount.toFixed(2)),
             frequency: data.donation_frequency || "One-time",
             method: Array.isArray(data.payment_method_types)
@@ -94,7 +96,7 @@ export default function SuccessPageContent() {
     y += 10;
 
     const fields = [
-      ["Receipt No", sessionId?.slice(0, 10).toUpperCase() || "N/A"],
+      ["Receipt ID", donationDetails.receiptId],
       ["Donor Name", donationDetails.donorName],
       ["Donor Email", donationDetails.donorEmail],
       ["Reference", donationDetails.reference],
@@ -167,6 +169,7 @@ export default function SuccessPageContent() {
           </h3>
 
           <div className="mt-3 space-y-2 text-left font-body text-darkText">
+            <p><strong>Receipt ID:</strong> {donationDetails.receiptId}</p>
             <p><strong>Donor:</strong> {donationDetails.donorName}</p>
             <p><strong>Email:</strong> {donationDetails.donorEmail}</p>
             <p><strong>Reference:</strong> {donationDetails.reference}</p>
@@ -187,7 +190,9 @@ export default function SuccessPageContent() {
             onClick={generatePDF}
             disabled={!donationDetails.amount}
             className={`px-6 py-3 ${
-              donationDetails.amount ? "bg-gray-700 hover:bg-gray-900" : "bg-gray-400 cursor-not-allowed"
+              donationDetails.amount
+                ? "bg-gray-700 hover:bg-gray-900"
+                : "bg-gray-400 cursor-not-allowed"
             } text-white font-semibold rounded-lg shadow-md transition flex items-center justify-center gap-2`}
           >
             <FontAwesomeIcon icon={faFilePdf} />
