@@ -52,6 +52,7 @@ const CustomAmount: React.FC<CustomAmountProps> = ({
     const finalAmount = localSelectedAmount || parseFloat(localCustomAmount) || 0;
 
     let reference = "";
+    
 
     if (localSelectedAmount) {
       const match = suggestedAmounts.find((tier) => tier.amount === localSelectedAmount);
@@ -67,7 +68,7 @@ const CustomAmount: React.FC<CustomAmountProps> = ({
     setError(null);
 
     if (finalAmount > 0) {
-      onProceed(finalAmount, reference);
+      onProceed(finalAmount, reference.trim());
     }
   };
 

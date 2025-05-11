@@ -29,7 +29,7 @@ export default function SuccessPageContent() {
     method: 'Unknown',
     donorName: 'Anonymous',
     donorEmail: 'Not Provided',
-    reference: '',
+    reference: 'General Donation',
     date: new Date().toLocaleDateString('en-GB', {
       day: '2-digit',
       month: 'long',
@@ -55,7 +55,10 @@ export default function SuccessPageContent() {
               : 'Unknown',
             donorName: data.donor_name || 'Anonymous',
             donorEmail: data.donor_email || 'Not Provided',
-            reference: data.donation_reference?.trim() || 'Unspecified',
+            reference:
+              data.donation_reference && data.donation_reference.trim().length > 0
+                ? data.donation_reference.trim()
+                : 'General Donation',
             date: new Date().toLocaleDateString('en-GB', {
               day: '2-digit',
               month: 'long',

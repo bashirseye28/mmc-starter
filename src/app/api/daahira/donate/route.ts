@@ -5,6 +5,13 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-02-24.acacia",
 });
 
+const sanitizeReference = (reference: string): string => {
+  if (typeof reference === "string" && reference.trim().length >= 3) {
+    return reference.trim();
+  }
+  return "General Donation";
+};
+
 // -------------------
 // POST: Create Stripe Session
 // -------------------
@@ -12,7 +19,7 @@ export async function POST(req: NextRequest) {
   try {
     const { name, email, amount, frequency, reference } = await req.json();
 
-    if (!amount || !frequency || !email || !reference?.trim()) {
+    if (!amount || !frequency || !email) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
@@ -21,7 +28,7 @@ export async function POST(req: NextRequest) {
       ? email.trim()
       : "not_provided@mmc.org";
 
-    const donationReference = reference.trim();
+    const donationReference = sanitizeReference(reference);
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://manchestermuridcommunity.org";
     const receiptId = `DON-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 
@@ -153,7 +160,7 @@ export async function GET(req: NextRequest) {
       amount_total,
       donor_name: metadata.donor_name,
       donor_email: metadata.donor_email,
-      donation_reference: metadata.donation_reference,
+      donation_reference: sanitizeReference(metadata.donation_reference),
       donation_amount: metadata.donation_amount,
       donation_frequency: metadata.donation_frequency,
       donation_date: metadata.donation_date,
