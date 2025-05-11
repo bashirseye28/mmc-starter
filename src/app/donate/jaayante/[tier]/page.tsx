@@ -15,7 +15,6 @@ const priceIds: Record<string, string> = {
   Fathul_Fattah: "price_1R1AQQ2M54cogX5deCkcEJxm",
 };
 
-// ✅ Function to get tier details
 const getTierDetails = (tierSlug: string) => {
   return jaayanteTiers.find((tier) => tier.slug === tierSlug);
 };
@@ -28,12 +27,10 @@ const JaayanteDonationPage = () => {
   const [email, setEmail] = useState("");
   const [anonymous, setAnonymous] = useState(false);
 
-  // ✅ Handle Proceed to Payment
   const handleProceedToPayment = async () => {
     if (!selectedTier) return;
 
-    // Ensure non-anonymous users provide details
-    if (!anonymous && (!donorName || !email)) {
+    if (!anonymous && (!donorName.trim() || !email.trim())) {
       alert("Please fill in all required fields or select 'Donate Anonymously'.");
       return;
     }
@@ -46,22 +43,24 @@ const JaayanteDonationPage = () => {
         body: JSON.stringify({
           tier: selectedTier.title,
           priceId: priceIds[selectedTier.title],
-          donorName: anonymous ? "Anonymous" : donorName,
-          email: anonymous ? "anonymous@donation.com" : email,
+          donorName: anonymous ? "Anonymous" : donorName.trim(),
+          email: anonymous ? "donor@anonymous.com" : email.trim(),
           isAnonymous: anonymous,
-          amount: selectedTier.amount, // ✅ ✅ ✅ ADDED THIS
+          amount: selectedTier.amount,
         }),
       });
 
       const data = await response.json();
       if (data.url) {
-        window.location.href = data.url; // ✅ Redirect to Stripe Checkout
+        window.location.href = data.url;
       } else {
         console.error("Stripe session error:", data.error);
+        alert("Something went wrong. Please try again.");
         setLoading(false);
       }
     } catch (error) {
       console.error("Payment error:", error);
+      alert("Something went wrong while processing your donation.");
       setLoading(false);
     }
   };
@@ -76,7 +75,7 @@ const JaayanteDonationPage = () => {
   }
 
   return (
-    <section className="py-20 bg-gray text-center">
+    <section className="py-20 bg-lightBg text-center">
       <div className="container mx-auto px-6 max-w-4xl">
         <motion.div
           className="mb-12"
@@ -90,51 +89,51 @@ const JaayanteDonationPage = () => {
           <p className="text-lg text-darkText font-body mt-3 max-w-3xl mx-auto">
             Your generous contribution of{" "}
             <span className="text-gold font-semibold">£{selectedTier.amount}</span> will play a vital role in building{" "}
-            <span className="text-primary font-semibold">Keur Serigne Touba (KST)</span>—a permanent center for faith,
-            education, and community service.
+            <span className="text-primary font-semibold">Keur Serigne Touba (KST)</span>.
           </p>
         </motion.div>
 
         {/* ✅ Donor Info Form */}
-        <div className="bg-white p-6 rounded-lg shadow-lg max-w-md mx-auto">
-          {/* ✅ Name & Email Fields (Hidden if Anonymous) */}
+        <div className="bg-white p-6 rounded-lg shadow-lg max-w-md mx-auto text-left">
           {!anonymous && (
             <>
+              <label htmlFor="name" className="text-sm font-medium text-gray-700">Full Name</label>
               <input
+                id="name"
                 type="text"
-                placeholder="Full Name"
+                placeholder="Your Name"
                 value={donorName}
                 onChange={(e) => setDonorName(e.target.value)}
-                className="w-full p-3 border rounded-lg mb-3"
-                required
+                className="w-full p-3 border rounded-lg mb-4"
               />
+              <label htmlFor="email" className="text-sm font-medium text-gray-700">Email Address</label>
               <input
+                id="email"
                 type="email"
-                placeholder="Email Address"
+                placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full p-3 border rounded-lg mb-3"
-                required
+                className="w-full p-3 border rounded-lg mb-4"
               />
             </>
           )}
 
-          {/* ✅ Anonymous Donation Checkbox */}
-          <label className="flex items-center gap-2 mb-4 text-gray-700">
+          <label className="flex items-center gap-2 mb-4 text-sm text-gray-700 cursor-pointer">
             <input
               type="checkbox"
               checked={anonymous}
               onChange={() => setAnonymous(!anonymous)}
+              className="accent-gold"
             />
             Donate Anonymously
           </label>
 
           <button
-            className="mt-4 px-6 py-3 bg-gold text-black font-semibold rounded-lg hover:bg-yellow-500 transition shadow-md w-full"
+            className="mt-2 px-6 py-3 bg-gold text-black font-semibold rounded-lg hover:bg-yellow-500 transition w-full shadow-md"
             onClick={handleProceedToPayment}
             disabled={loading}
           >
-            {loading ? "Processing..." : "Proceed to Payment"}
+            {loading ? "Processing..." : `Donate £${selectedTier.amount}`}
           </button>
         </div>
       </div>
