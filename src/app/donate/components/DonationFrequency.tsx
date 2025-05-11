@@ -5,10 +5,10 @@ import { motion } from "framer-motion";
 
 // ✅ Donation Frequency Options
 const frequencies = [
-  { value: "one-time", label: "One-Time Donation" },
-  { value: "weekly", label: "Weekly Donation" },
-  { value: "monthly", label: "Monthly Donation" },
-  { value: "yearly", label: "Yearly Donation" },
+  { value: "one-time", label: "One-Time" },
+  { value: "weekly", label: "Weekly" },
+  { value: "monthly", label: "Monthly" },
+  { value: "yearly", label: "Yearly" },
 ];
 
 interface DonationFrequencyProps {
