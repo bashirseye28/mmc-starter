@@ -23,13 +23,18 @@ export default function SuccessPageContent() {
   const sessionId = searchParams.get('session_id');
 
   const [donationDetails, setDonationDetails] = useState({
+    receiptId: '',
     amount: 0,
     frequency: 'One-time',
     method: 'Unknown',
     donorName: 'Anonymous',
     donorEmail: 'Not Provided',
     reference: 'Custom Donation',
-    date: new Date().toLocaleDateString(),
+    date: new Date().toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+    }),
   });
 
   useEffect(() => {
@@ -42,13 +47,20 @@ export default function SuccessPageContent() {
 
         if (response.ok) {
           setDonationDetails({
+            receiptId: data.receipt_id || sessionId?.slice(0, 10).toUpperCase() || 'N/A',
             amount: parseFloat(data.donation_amount || '0'),
             frequency: data.donation_frequency || 'One-time',
-            method: data.payment_method_types || 'Card',
+            method: Array.isArray(data.payment_method_types)
+              ? data.payment_method_types[0]?.toUpperCase() || 'Unknown'
+              : 'Unknown',
             donorName: data.donor_name || 'Anonymous',
             donorEmail: data.donor_email || 'Not Provided',
             reference: data.donation_reference || 'Custom Donation',
-            date: new Date().toLocaleDateString(),
+            date: new Date().toLocaleDateString('en-GB', {
+              day: '2-digit',
+              month: 'long',
+              year: 'numeric',
+            }),
           });
         } else {
           console.error('Failed to fetch donation details:', data.error);
@@ -61,39 +73,69 @@ export default function SuccessPageContent() {
     fetchDonationDetails();
   }, [sessionId]);
 
-  const generatePDF = () => {
+  const generatePDF = async () => {
     const doc = new jsPDF();
     const logoUrl = 'https://res.cloudinary.com/dnmoy5wua/image/upload/v1742051469/logo_ys5gk6.png';
 
-    doc.addImage(logoUrl, 'PNG', 80, 10, 50, 20);
-    doc.setFont('helvetica', 'bold').setFontSize(22);
-    doc.text('Donation Receipt', 20, 45);
+    const imgBlob = await fetch(logoUrl).then((res) => res.blob());
+    const base64 = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(imgBlob);
+    });
 
-    doc.setFontSize(14).setFont('helvetica', 'normal');
-    doc.text(`Donor Name: ${donationDetails.donorName}`, 20, 60);
-    doc.text(`Donor Email: ${donationDetails.donorEmail}`, 20, 70);
-    doc.text(`Donation Amount: £${donationDetails.amount}`, 20, 80);
-    doc.text(`Reference: ${donationDetails.reference}`, 20, 90);
-    doc.text(`Donation Frequency: ${donationDetails.frequency}`, 20, 100);
-    doc.text(`Payment Method: ${donationDetails.method}`, 20, 110);
-    doc.text(`Date: ${donationDetails.date}`, 20, 120);
+    // Header logo and title
+    doc.addImage(base64, 'PNG', 85, 10, 40, 40);
+    let y = 60;
+    doc.setFont('helvetica', 'bold').setFontSize(18);
+    doc.text('Donation Receipt', 105, y, { align: 'center' });
 
-    doc.setFontSize(12).setFont('helvetica', 'italic');
-    doc.text('Thank you for your generous donation!', 20, 140);
-    doc.text('Manchester Murid Community', 20, 150);
+    y += 10;
+    doc.setDrawColor(180);
+    doc.line(20, y, 190, y);
+    y += 10;
+
+    const fields = [
+      ['Receipt ID', donationDetails.receiptId],
+      ['Donor Name', donationDetails.donorName],
+      ['Donor Email', donationDetails.donorEmail],
+      ['Reference', donationDetails.reference],
+      ['Amount', `£${donationDetails.amount.toFixed(2)}`],
+      ['Frequency', donationDetails.frequency],
+      ['Payment Method', donationDetails.method],
+      ['Date', donationDetails.date],
+    ];
+
+    doc.setFont('courier', 'normal').setFontSize(12);
+    fields.forEach(([label, value]) => {
+      doc.text(`${label}:`, 25, y);
+      doc.text(value, 90, y);
+      y += 8;
+    });
+
+    y += 5;
+    doc.setDrawColor(180);
+    doc.line(20, y, 190, y);
+    y += 10;
+
+    doc.setFont('times', 'italic').setFontSize(11);
+    doc.text('May Allah reward you abundantly for your support.', 105, y, { align: 'center' });
+
+    y += 12;
+    doc.setFont('helvetica', 'bold').setFontSize(10);
+    doc.text('Manchester Murid Community', 105, y, { align: 'center' });
+    y += 5;
     doc.setFont('helvetica', 'normal');
-    doc.text('info@manchestermuridcommunity.org', 20, 170);
-    doc.text('+44 7541 475 547', 20, 180);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Registered Charity No: 1194666', 20, 160);
+    doc.text('Registered Charity No: 1194666', 105, y, { align: 'center' });
+    y += 5;
+    doc.text('info@manchestermuridcommunity.org | +44 7541 475 547', 105, y, { align: 'center' });
 
-    doc.save('Donation_Receipt.pdf');
+    doc.save('MMC_Donation_Receipt.pdf');
   };
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-gray-50 px-6 relative">
       <Confetti recycle={false} numberOfPieces={300} />
-
       <div className="bg-white shadow-xl p-10 rounded-lg text-center max-w-lg border border-gray-200">
         <motion.div
           initial={{ scale: 0.5, opacity: 0 }}
@@ -132,7 +174,7 @@ export default function SuccessPageContent() {
             </p>
             <p className="flex items-center gap-2">
               <FontAwesomeIcon icon={faMoneyBillWave} className="text-gold" />
-              Amount: <span className="text-primary font-bold">£{donationDetails.amount}</span>
+              Amount: <span className="text-primary font-bold">£{donationDetails.amount.toFixed(2)}</span>
             </p>
             <p className="flex items-center gap-2">
               Reference: <span className="text-darkText">{donationDetails.reference}</span>
@@ -158,7 +200,12 @@ export default function SuccessPageContent() {
         >
           <button
             onClick={generatePDF}
-            className="px-6 py-3 bg-gray-700 text-white font-semibold rounded-lg shadow-md hover:bg-gray-900 transition flex items-center justify-center gap-2"
+            disabled={!donationDetails.amount}
+            className={`px-6 py-3 ${
+              donationDetails.amount
+                ? 'bg-gray-700 hover:bg-gray-900'
+                : 'bg-gray-400 cursor-not-allowed'
+            } text-white font-semibold rounded-lg shadow-md transition flex items-center justify-center gap-2`}
           >
             <FontAwesomeIcon icon={faFilePdf} />
             Download Receipt (PDF)
@@ -180,7 +227,7 @@ export default function SuccessPageContent() {
           </button>
           <button
             onClick={() => router.push('/donate')}
-            className="px-6 py-3 bg-gold text-black font-semibold rounded-lg shadow-md hover:bg-[#d4af37] transition flex items-center justify-center gap-2"
+            className="px-6 py-3 bg-gold text-black font-semibold rounded-lg shadow-md hover:bg-yellow-400 transition flex items-center justify-center gap-2"
           >
             Donate Again
             <FontAwesomeIcon icon={faArrowRight} />
