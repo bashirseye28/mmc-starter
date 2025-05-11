@@ -1,4 +1,3 @@
-// /src/app/api/daahira/donate/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
@@ -10,16 +9,21 @@ export async function POST(req: NextRequest) {
   try {
     const { name, email, amount, frequency, reference } = await req.json();
 
+    // ✅ Validate input
     if (!amount || !frequency || !email || !reference?.trim()) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     const donorName = name?.trim() || "Anonymous Donor";
-    const donorEmail = email?.trim() || "Not Provided";
+    const donorEmail = email?.trim() || "not_provided@mmc.org";
     const donationReference = reference.trim();
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://manchestermuridcommunity.org";
 
+    // ✅ Generate unique receipt ID
+    const receiptId = `DON-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+
     const metadata = {
+      receipt_id: receiptId,
       donor_name: donorName,
       donor_email: donorEmail,
       donation_amount: amount.toString(),
@@ -31,9 +35,10 @@ export async function POST(req: NextRequest) {
     let session;
 
     if (frequency === "one-time") {
+      // ✅ One-time donation (payment)
       session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
-        customer_email: email,
+        customer_email: donorEmail,
         mode: "payment",
         metadata,
         payment_intent_data: { metadata },
@@ -54,13 +59,38 @@ export async function POST(req: NextRequest) {
         cancel_url: `${baseUrl}/donate?canceled=true`,
       });
     } else {
+      // ✅ Recurring donation (subscription)
       const priceMap: Record<string, Record<string, string>> = {
-        "10": { weekly: process.env.PRICE_10_WEEKLY!, monthly: process.env.PRICE_10_MONTHLY!, yearly: process.env.PRICE_10_YEARLY! },
-        "15": { weekly: process.env.PRICE_15_WEEKLY!, monthly: process.env.PRICE_15_MONTHLY!, yearly: process.env.PRICE_15_YEARLY! },
-        "25": { weekly: process.env.PRICE_25_WEEKLY!, monthly: process.env.PRICE_25_MONTHLY!, yearly: process.env.PRICE_25_YEARLY! },
-        "50": { weekly: process.env.PRICE_50_WEEKLY!, monthly: process.env.PRICE_50_MONTHLY!, yearly: process.env.PRICE_50_YEARLY! },
-        "100": { weekly: process.env.PRICE_100_WEEKLY!, monthly: process.env.PRICE_100_MONTHLY!, yearly: process.env.PRICE_100_YEARLY! },
-        "250": { weekly: process.env.PRICE_250_WEEKLY!, monthly: process.env.PRICE_250_MONTHLY!, yearly: process.env.PRICE_250_YEARLY! },
+        "10": {
+          weekly: process.env.PRICE_10_WEEKLY!,
+          monthly: process.env.PRICE_10_MONTHLY!,
+          yearly: process.env.PRICE_10_YEARLY!,
+        },
+        "15": {
+          weekly: process.env.PRICE_15_WEEKLY!,
+          monthly: process.env.PRICE_15_MONTHLY!,
+          yearly: process.env.PRICE_15_YEARLY!,
+        },
+        "25": {
+          weekly: process.env.PRICE_25_WEEKLY!,
+          monthly: process.env.PRICE_25_MONTHLY!,
+          yearly: process.env.PRICE_25_YEARLY!,
+        },
+        "50": {
+          weekly: process.env.PRICE_50_WEEKLY!,
+          monthly: process.env.PRICE_50_MONTHLY!,
+          yearly: process.env.PRICE_50_YEARLY!,
+        },
+        "100": {
+          weekly: process.env.PRICE_100_WEEKLY!,
+          monthly: process.env.PRICE_100_MONTHLY!,
+          yearly: process.env.PRICE_100_YEARLY!,
+        },
+        "250": {
+          weekly: process.env.PRICE_250_WEEKLY!,
+          monthly: process.env.PRICE_250_MONTHLY!,
+          yearly: process.env.PRICE_250_YEARLY!,
+        },
       };
 
       const priceId = priceMap[amount]?.[frequency];
@@ -70,7 +100,7 @@ export async function POST(req: NextRequest) {
 
       session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
-        customer_email: email,
+        customer_email: donorEmail,
         mode: "subscription",
         metadata,
         subscription_data: { metadata },
