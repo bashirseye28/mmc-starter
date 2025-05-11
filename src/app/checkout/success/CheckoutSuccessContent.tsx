@@ -46,7 +46,8 @@ export default function CheckoutSuccessContent() {
     const { metadata, customer_email, line_items = [] } = sessionData;
 
     const doc = new jsPDF();
-    const logoUrl = "https://res.cloudinary.com/dnmoy5wua/image/upload/v1746670607/logo_fdhstb.png";
+    const logoUrl =
+      "https://res.cloudinary.com/dnmoy5wua/image/upload/v1746935382/logo_co6bmh.png";
 
     const logoBlob = await fetch(logoUrl).then((res) => res.blob());
     const logoBase64 = await new Promise<string>((resolve) => {
@@ -63,8 +64,10 @@ export default function CheckoutSuccessContent() {
 
     y += 15;
     doc.setFontSize(16).text("Manchester Murid Community", 20, y);
-    y += 8;
+    y += 7;
     doc.setFontSize(11);
+    doc.text("Registered Charity No: 1194666", 20, y);
+    y += 6;
     doc.text("Email: contact@manchestermuridcommunity.org", 20, y);
     y += 6;
     doc.text("Website: manchestermuridcommunity.org", 20, y);
@@ -143,9 +146,15 @@ export default function CheckoutSuccessContent() {
         </p>
 
         <div className="bg-gray-50 border rounded-lg p-4 text-left text-sm text-gray-800 font-body mb-6 space-y-2">
-          <p><strong>Order ID:</strong> {orderId}</p>
-          <p><strong>Email:</strong> {customer_email}</p>
-          <p><strong>Total Paid:</strong> £{total}</p>
+          <p>
+            <strong>Order ID:</strong> {orderId}
+          </p>
+          <p>
+            <strong>Email:</strong> {customer_email}
+          </p>
+          <p>
+            <strong>Total Paid:</strong> £{total}
+          </p>
         </div>
 
         <div className="flex flex-col sm:flex-row justify-center gap-4">
