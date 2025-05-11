@@ -33,6 +33,15 @@ const JaayanteDonationPage = () => {
       return alert("Please enter your name and email, or select anonymous.");
     }
 
+    const normalizedKey = selectedTier.title.replace(/\s+/g, "_");
+    const safePriceId = priceIds[normalizedKey];
+
+    if (!safePriceId) {
+      alert("Error: Invalid donation tier configuration.");
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await fetch("/api/stripe/jaayante-checkout", {
@@ -41,7 +50,7 @@ const JaayanteDonationPage = () => {
         body: JSON.stringify({
           tier: selectedTier.title,
           amount: selectedTier.amount,
-          priceId: priceIds[selectedTier.title],
+          priceId: safePriceId,
           donorName: anonymous ? "Anonymous" : donorName.trim(),
           email: anonymous ? "donor@anonymous.com" : email.trim(),
           isAnonymous: anonymous,
