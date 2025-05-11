@@ -1,15 +1,7 @@
-import dynamic from "next/dynamic";
-import { Suspense } from "react";
+"use client";
 
-// ✅ Dynamically import to prevent hydration mismatch issues
-const CheckoutSuccessContent = dynamic(() => import("./CheckoutSuccessContent"), {
-  ssr: false,
-});
+import CheckoutSuccessContent from "./CheckoutSuccessContent";
 
 export default function CheckoutSuccessPage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-gray-500">Loading order confirmation...</div>}>
-      <CheckoutSuccessContent />
-    </Suspense>
-  );
+  return <CheckoutSuccessContent />;
 }
