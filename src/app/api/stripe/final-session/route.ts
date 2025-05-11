@@ -5,15 +5,16 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: "2025-02-24.acacia",
 });
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { session_id: string } }
-) {
-  const session_id = params.session_id;
+export async function GET(req: NextRequest) {
+  const session_id = req.nextUrl.searchParams.get("session_id");
+
+  if (!session_id) {
+    return NextResponse.json({ error: "Missing session_id" }, { status: 400 });
+  }
 
   try {
     const session = await stripe.checkout.sessions.retrieve(session_id, {
-      expand: ["line_items.data.price.product", "payment_intent"],
+      expand: ["payment_intent"],
     });
 
     const lineItems = await stripe.checkout.sessions.listLineItems(session_id, {
@@ -31,7 +32,7 @@ export async function GET(
       line_items: lineItems.data,
     });
   } catch (err: any) {
-    console.error("❌ Failed to fetch session:", err.message);
+    console.error("❌ Stripe session fetch error:", err.message);
     return NextResponse.json(
       { error: "Could not retrieve session." },
       { status: 500 }

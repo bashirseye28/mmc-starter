@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle, FileDown } from "lucide-react";
+import jsPDF from "jspdf";
 
 export default function CheckoutSuccessContent() {
   const router = useRouter();
@@ -23,7 +24,7 @@ export default function CheckoutSuccessContent() {
 
     const fetchSession = async () => {
       try {
-        const res = await fetch(`/api/shop/session/${sessionId}`);
+        const res = await fetch(`/api/stripe/final-session?session_id=${sessionId}`);
         if (!res.ok) throw new Error("Failed to fetch session");
         const data = await res.json();
         setSessionData(data);
@@ -39,26 +40,76 @@ export default function CheckoutSuccessContent() {
   }, [sessionId]);
 
   const handleDownloadReceipt = async () => {
-    if (!sessionId) return;
+    if (!sessionData) return;
     setDownloading(true);
 
-    try {
-      const res = await fetch(`/api/shop/receipt/${sessionId}`);
-      if (!res.ok) throw new Error("Failed to fetch receipt.");
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `receipt-${sessionId}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      alert("Failed to download receipt.");
-    } finally {
-      setDownloading(false);
-    }
+    const { metadata, customer_email, line_items = [] } = sessionData;
+
+    const doc = new jsPDF();
+    const logoUrl =
+      "https://res.cloudinary.com/dnmoy5wua/image/upload/v1746670607/logo_fdhstb.png";
+
+    const logoBlob = await fetch(logoUrl).then((res) => res.blob());
+    const logoBase64 = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(logoBlob);
+    });
+
+    doc.addImage(logoBase64, "PNG", 85, 10, 40, 40);
+
+    let y = 60;
+    doc.setFontSize(20).setFont("helvetica", "bold");
+    doc.text("Order Receipt", 105, y, { align: "center" });
+
+    y += 15;
+    doc.setFontSize(16).text("Manchester Murid Community", 20, y);
+    y += 8;
+    doc.setFontSize(11);
+    doc.text("Email: contact@manchestermuridcommunity.org", 20, y);
+    y += 6;
+    doc.text("Website: manchestermuridcommunity.org", 20, y);
+
+    y += 10;
+    doc.setLineWidth(0.4);
+    doc.line(20, y, 190, y);
+    y += 12;
+
+    doc.setFont("helvetica", "bold").text("Customer Info:", 20, y);
+    y += 7;
+    doc.setFont("helvetica", "normal");
+    doc.text(`Email: ${customer_email}`, 20, y);
+    y += 6;
+    doc.text(`Order ID: ${metadata?.["Order ID"] ?? "N/A"}`, 20, y);
+    y += 6;
+    doc.text(`Date: ${new Date().toLocaleString("en-GB")}`, 20, y);
+
+    y += 10;
+    doc.setFont("helvetica", "bold").text("Items:", 20, y);
+    y += 8;
+    doc.setFont("helvetica", "normal");
+
+    line_items.forEach((item: any) => {
+      const desc = `${item.description} — Qty: ${item.quantity} × £${(
+        item.price.unit_amount / 100
+      ).toFixed(2)}`;
+      doc.text(desc, 20, y);
+      y += 7;
+    });
+
+    y += 6;
+    doc.setFont("helvetica", "bold").text(`Total Paid: £${metadata?.["Total Paid"]}`, 20, y);
+
+    y += 15;
+    doc.setFontSize(10).setFont("times", "italic");
+    doc.text("May Allah reward you abundantly for your support.", 105, y, { align: "center" });
+
+    y += 8;
+    doc.setFontSize(9).setFont("helvetica", "normal");
+    doc.text("This is your official receipt. Thank you!", 105, y, { align: "center" });
+
+    doc.save(`receipt-${metadata?.["Order ID"] ?? sessionId}.pdf`);
+    setDownloading(false);
   };
 
   const { metadata, customer_email } = sessionData || {};
@@ -93,12 +144,17 @@ export default function CheckoutSuccessContent() {
         </p>
 
         <div className="bg-gray-50 border rounded-lg p-4 text-left text-sm text-gray-800 font-body mb-6 space-y-2">
-          <p><strong>Order ID:</strong> {orderId}</p>
-          <p><strong>Email:</strong> {customer_email}</p>
-          <p><strong>Total Paid:</strong> £{total}</p>
+          <p>
+            <strong>Order ID:</strong> {orderId}
+          </p>
+          <p>
+            <strong>Email:</strong> {customer_email}
+          </p>
+          <p>
+            <strong>Total Paid:</strong> £{total}
+          </p>
         </div>
 
-        {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row justify-center gap-4">
           <button
             onClick={() => router.push("/shop")}
