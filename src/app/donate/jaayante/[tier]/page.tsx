@@ -44,7 +44,7 @@ const JaayanteDonationPage = () => {
 
     setLoading(true);
     try {
-      const res = await fetch("/api/stripe/jaayante-checkout", {
+      const res = await fetch("/api/stripe/jaayante", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
