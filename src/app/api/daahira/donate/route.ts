@@ -5,7 +5,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-02-24.acacia",
 });
 
-// Only allow specific reference values for suggested amounts
 const allowedReferences = [
   "Help sponsor a Madrassah student’s learning materials.",
   "Weekly Iftaar Contribution.",
@@ -18,14 +17,11 @@ const allowedReferences = [
 const sanitizeReference = (ref: string | null | undefined): string => {
   if (typeof ref === "string" && ref.trim().length >= 3) {
     const cleaned = ref.trim();
-    return allowedReferences.includes(cleaned) ? cleaned : cleaned; // Accept custom reference too
+    return allowedReferences.includes(cleaned) ? cleaned : cleaned;
   }
   return "General Donation";
 };
 
-// -------------------
-// POST: Create Stripe Session
-// -------------------
 export async function POST(req: NextRequest) {
   try {
     const { name, email, amount, frequency, reference } = await req.json();
@@ -35,10 +31,7 @@ export async function POST(req: NextRequest) {
     }
 
     const donorName = name?.trim() || "Anonymous Donor";
-    const donorEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-      ? email.trim()
-      : "not_provided@mmc.org";
-
+    const donorEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email.trim() : "not_provided@mmc.org";
     const donationReference = sanitizeReference(reference);
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://manchestermuridcommunity.org";
     const receiptId = `DON-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
@@ -59,11 +52,13 @@ export async function POST(req: NextRequest) {
 
     if (frequency === "one-time") {
       session = await stripe.checkout.sessions.create({
+        mode: "payment",
         payment_method_types: ["card"],
         customer_email: donorEmail,
-        mode: "payment",
-        metadata,
-        payment_intent_data: { metadata },
+        metadata, // ✅ Make sure it's here
+        payment_intent_data: {
+          metadata, // ✅ And also here
+        },
         line_items: [
           {
             price_data: {
@@ -120,11 +115,13 @@ export async function POST(req: NextRequest) {
       }
 
       session = await stripe.checkout.sessions.create({
+        mode: "subscription",
         payment_method_types: ["card"],
         customer_email: donorEmail,
-        mode: "subscription",
-        metadata,
-        subscription_data: { metadata },
+        metadata, // ✅ Required for recurring too
+        subscription_data: {
+          metadata, // ✅ Also under subscription_data
+        },
         line_items: [{ price: priceId, quantity: 1 }],
         success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${baseUrl}/donate?canceled=true`,
@@ -138,9 +135,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// -------------------
-// GET: Retrieve Donation Receipt Data
-// -------------------
 export async function GET(req: NextRequest) {
   const sessionId = req.nextUrl.searchParams.get("session_id");
   if (!sessionId) {
