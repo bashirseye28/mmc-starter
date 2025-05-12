@@ -37,6 +37,7 @@
     "jspdf": "^3.0.1",
     "jspdf-autotable": "^5.0.2",
     "lucide-react": "^0.479.0",
+    "micro": "^10.0.1",
     "mongoose": "^8.12.2",
     "next": "^15.2.3",
     "next-transpile-modules": "^10.0.1",

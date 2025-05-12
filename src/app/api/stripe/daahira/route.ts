@@ -5,7 +5,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-02-24.acacia",
 });
 
-// ✅ Sanitize allowed references
+// 🎯 Allowed references for display
 const allowedReferences = [
   "Help sponsor a Madrassah student’s learning materials.",
   "Weekly Iftaar Contribution.",
@@ -15,14 +15,16 @@ const allowedReferences = [
   "Large donor contributions towards major projects.",
 ];
 
+// 🔐 Clean and fallback donation reference
 const sanitizeReference = (ref: string | null | undefined): string => {
   if (typeof ref === "string" && ref.trim().length >= 3) {
     const cleaned = ref.trim();
-    return allowedReferences.includes(cleaned) ? cleaned : cleaned;
+    return allowedReferences.includes(cleaned) ? cleaned : "General Donation";
   }
   return "General Donation";
 };
 
+// ✅ POST: Create Stripe checkout session
 export async function POST(req: NextRequest) {
   try {
     const { name, email, amount, frequency, reference } = await req.json();
@@ -49,6 +51,7 @@ export async function POST(req: NextRequest) {
 
     let session;
 
+    // 🧾 One-time donation
     if (frequency === "one-time") {
       session = await stripe.checkout.sessions.create({
         mode: "payment",
@@ -72,7 +75,7 @@ export async function POST(req: NextRequest) {
         cancel_url: `${baseUrl}/donate?canceled=true`,
       });
     } else {
-      // ✅ Recurring (mapped by amount and frequency)
+      // 🔁 Recurring donation (subscription)
       const priceMap: Record<string, Record<string, string>> = {
         "10": {
           weekly: process.env.PRICE_10_WEEKLY!,
@@ -129,6 +132,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
+// ✅ GET: Retrieve metadata for success page
 export async function GET(req: NextRequest) {
   const sessionId = req.nextUrl.searchParams.get("session_id");
   if (!sessionId) {
