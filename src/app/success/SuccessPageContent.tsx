@@ -187,7 +187,7 @@ export default function SuccessPageContent() {
               Amount: <span className="text-primary font-bold">£{donationDetails.amount.toFixed(2)}</span>
             </p>
             <p className="flex items-center gap-2">
-              Reference: <span className="text-darkText">{donationDetails.reference}</span>
+              Reference: <span className="text-primary">{donationDetails.reference}</span>
             </p>
             <p className="flex items-center gap-2">
               <FontAwesomeIcon icon={faCalendarAlt} className="text-gold" />
