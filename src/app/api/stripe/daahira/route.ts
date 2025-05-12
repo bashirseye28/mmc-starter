@@ -5,6 +5,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-02-24.acacia",
 });
 
+// ✅ Sanitize allowed references
 const allowedReferences = [
   "Help sponsor a Madrassah student’s learning materials.",
   "Weekly Iftaar Contribution.",
@@ -53,9 +54,7 @@ export async function POST(req: NextRequest) {
         mode: "payment",
         payment_method_types: ["card"],
         customer_email: donorEmail,
-        payment_intent_data: {
-          metadata, // ✅ only this is used
-        },
+        payment_intent_data: { metadata },
         line_items: [
           {
             price_data: {
@@ -73,6 +72,7 @@ export async function POST(req: NextRequest) {
         cancel_url: `${baseUrl}/donate?canceled=true`,
       });
     } else {
+      // ✅ Recurring (mapped by amount and frequency)
       const priceMap: Record<string, Record<string, string>> = {
         "10": {
           weekly: process.env.PRICE_10_WEEKLY!,
@@ -115,9 +115,7 @@ export async function POST(req: NextRequest) {
         mode: "subscription",
         payment_method_types: ["card"],
         customer_email: donorEmail,
-        subscription_data: {
-          metadata, // ✅ only here
-        },
+        subscription_data: { metadata },
         line_items: [{ price: priceId, quantity: 1 }],
         success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${baseUrl}/donate?canceled=true`,
