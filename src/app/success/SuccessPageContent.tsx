@@ -22,21 +22,12 @@ export default function SuccessPageContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('session_id');
 
-  const allowedReferences = [
-    "Help sponsor a Madrassah student’s learning materials.",
-    "Weekly Iftaar Contribution.",
-    "Adiyyah Tuuba – Sacred Offering.",
-    "Provide meals for those in need.",
-    "Support the KST Centre Project.",
-    "Large donor contributions towards major projects.",
-  ];
-
   const [donationDetails, setDonationDetails] = useState({
     receiptId: '',
     amount: 0,
     frequency: 'One-time',
     method: 'Unknown',
-    donorName: 'Anonymous',
+    donorName: 'Anonymous Donor',
     donorEmail: 'Not Provided',
     reference: 'General Donation',
     date: new Date().toLocaleDateString('en-GB', {
@@ -55,18 +46,17 @@ export default function SuccessPageContent() {
         const data = await response.json();
 
         if (response.ok) {
+          const cleanReference = data.donation_reference?.trim();
           setDonationDetails({
-            receiptId: data.receipt_id || sessionId?.slice(0, 10).toUpperCase() || 'N/A',
+            receiptId: data.receipt_id || sessionId.slice(0, 10).toUpperCase() || 'N/A',
             amount: parseFloat(data.donation_amount || '0'),
             frequency: data.donation_frequency || 'One-time',
             method: Array.isArray(data.payment_method_types)
               ? data.payment_method_types[0]?.toUpperCase() || 'Unknown'
               : 'Unknown',
-            donorName: data.donor_name || 'Anonymous',
+            donorName: data.donor_name || 'Anonymous Donor',
             donorEmail: data.donor_email || 'Not Provided',
-            reference: allowedReferences.includes(data.donation_reference?.trim())
-              ? data.donation_reference.trim()
-              : 'General Donation',
+            reference: cleanReference && cleanReference.length > 2 ? cleanReference : 'General Donation',
             date: new Date().toLocaleDateString('en-GB', {
               day: '2-digit',
               month: 'long',
@@ -74,10 +64,10 @@ export default function SuccessPageContent() {
             }),
           });
         } else {
-          console.error('Failed to fetch donation details:', data.error);
+          console.error('❌ Failed to fetch donation details:', data.error);
         }
       } catch (error) {
-        console.error('Error fetching donation details:', error);
+        console.error('❌ Error fetching donation details:', error);
       }
     };
 
@@ -169,35 +159,43 @@ export default function SuccessPageContent() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, delay: 0.3 }}
         >
-          <h3 className="text-xl font-semibold text-primary text-center mb-4">
-            <span className="text-gold">Donation</span> Summary
+          <h3 className="text-xl font-semibold text-center mb-4">
+            <span className="text-gold">Donation</span>{' '}
+            <span className="text-primary">Summary</span>
           </h3>
 
-          <div className="space-y-3 text-left text-primary text-lg font-semibold">
+          <div className="space-y-3 text-left text-lg font-semibold">
             <p className="flex items-center gap-2">
               <FontAwesomeIcon icon={faUser} className="text-gold" />
-              Donor: <span className="text-darkText">{donationDetails.donorName}</span>
+              <span className="text-primary">Donor:</span>{' '}
+              <span className="text-darkText">{donationDetails.donorName}</span>
             </p>
             <p className="flex items-center gap-2">
               <FontAwesomeIcon icon={faEnvelope} className="text-gold" />
-              Email: <span className="text-darkText">{donationDetails.donorEmail}</span>
+              <span className="text-primary">Email:</span>{' '}
+              <span className="text-darkText">{donationDetails.donorEmail}</span>
             </p>
             <p className="flex items-center gap-2">
               <FontAwesomeIcon icon={faMoneyBillWave} className="text-gold" />
-              Amount: <span className="text-primary font-bold">£{donationDetails.amount.toFixed(2)}</span>
+              <span className="text-primary">Amount:</span>{' '}
+              <span className="text-darkText">£{donationDetails.amount.toFixed(2)}</span>
             </p>
             <p className="flex items-center gap-2">
-              Reference: <span className="text-primary">{donationDetails.reference}</span>
+              <span className="text-primary">Reference:</span>{' '}
+              <span className="text-darkText">{donationDetails.reference}</span>
             </p>
             <p className="flex items-center gap-2">
               <FontAwesomeIcon icon={faCalendarAlt} className="text-gold" />
-              Frequency: <span className="text-darkText">{donationDetails.frequency}</span>
+              <span className="text-primary">Frequency:</span>{' '}
+              <span className="text-darkText">{donationDetails.frequency}</span>
             </p>
             <p className="flex items-center gap-2">
-              Payment Method: <span className="text-darkText capitalize">{donationDetails.method}</span>
+              <span className="text-primary">Payment Method:</span>{' '}
+              <span className="text-darkText capitalize">{donationDetails.method}</span>
             </p>
             <p className="flex items-center gap-2">
-              Date: <span className="text-darkText">{donationDetails.date}</span>
+              <span className="text-primary">Date:</span>{' '}
+              <span className="text-darkText">{donationDetails.date}</span>
             </p>
           </div>
         </motion.div>
