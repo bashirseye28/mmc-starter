@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
         },
       ],
       success_url: `${baseUrl}/success/jaayante?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/checkout/cancel`,
+      cancel_url: `${baseUrl}/donate/cancel`,
     });
 
     return NextResponse.json({ url: session.url });
