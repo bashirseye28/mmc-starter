@@ -4,21 +4,13 @@ import { motion } from "framer-motion";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { jaayanteTiers } from "@/data/jaayanteTiers";
-
-const priceIds: Record<string, string> = {
-  Sindiidi: "price_1R1ALk2M54cogX5dRpLwsrSl",
-  Wakaana: "price_1R1ANE2M54cogX5dh5OVBIJu",
-  Jaalibatu: "price_1R1AO82M54cogX5dGKIbvsPV",
-  Mawaahibu: "price_1R1AP92M54cogX5dKKEjJOxW",
-  Midaadi: "price_1R1APi2M54cogX5djRcZ8BXj",
-  Fathul_Fattah: "price_1R1AQQ2M54cogX5deCkcEJxm",
-};
+import { jaayantePriceIds } from "@/data/priceIds";
 
 const getTierDetails = (slug: string) =>
   jaayanteTiers.find((tier) => tier.slug === slug);
 
-const JaayanteDonationPage = () => {
-  const { tier } = useParams();
+export default function JaayanteDonationPage() {
+  const { tier } = useParams(); // e.g. "sindiidi", "fathul-fattah"
   const selectedTier = getTierDetails(tier as string);
 
   const [loading, setLoading] = useState(false);
@@ -27,18 +19,20 @@ const JaayanteDonationPage = () => {
   const [anonymous, setAnonymous] = useState(false);
 
   const handleProceed = async () => {
-    if (!selectedTier) return;
-
-    if (!anonymous && (!donorName.trim() || !email.trim())) {
-      return alert("Please enter your name and email, or select anonymous.");
+    if (!selectedTier) {
+      alert("Invalid donation tier selected.");
+      return;
     }
 
-    const normalizedKey = selectedTier.title.replace(/\s+/g, "_");
-    const safePriceId = priceIds[normalizedKey];
+    if (!anonymous && (!donorName.trim() || !email.trim())) {
+      alert("Please enter your name and email, or select anonymous.");
+      return;
+    }
 
+    const safePriceId = jaayantePriceIds[selectedTier.slug];
     if (!safePriceId) {
-      alert("Error: Invalid donation tier configuration.");
-      setLoading(false);
+      console.error("❌ No Stripe Price ID for:", selectedTier.slug);
+      alert("Error: This donation tier is not configured.");
       return;
     }
 
@@ -48,7 +42,7 @@ const JaayanteDonationPage = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          tier: selectedTier.title,
+          tier: selectedTier.slug, // 👈 send slug, not title
           amount: selectedTier.amount,
           priceId: safePriceId,
           donorName: anonymous ? "Anonymous" : donorName.trim(),
@@ -58,14 +52,15 @@ const JaayanteDonationPage = () => {
       });
 
       const data = await res.json();
-      if (data.url) {
+      if (data?.url) {
         window.location.href = data.url;
       } else {
         throw new Error(data.error || "Checkout failed");
       }
     } catch (err) {
+      console.error("❌ Stripe checkout failed:", err);
       alert("Donation failed. Please try again.");
-      console.error(err);
+    } finally {
       setLoading(false);
     }
   };
@@ -142,6 +137,4 @@ const JaayanteDonationPage = () => {
       </div>
     </section>
   );
-};
-
-export default JaayanteDonationPage;
+}

@@ -5,29 +5,25 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-02-24.acacia",
 });
 
-// ✅ Mapping of tiers to Stripe Price IDs
+// ✅ Stripe Price IDs from environment variables
 const priceIds: Record<string, string> = {
-  Sindiidi: "price_1R1ALk2M54cogX5dRpLwsrSl",
-  Wakaana: "price_1R1ANE2M54cogX5dh5OVBIJu",
-  Jaalibatu: "price_1R1AO82M54cogX5dGKIbvsPV",
-  Mawaahibu: "price_1R1AP92M54cogX5dKKEjJOxW",
-  Midaadi: "price_1R1APi2M54cogX5djRcZ8BXj",
-  Fathul_Fattah: "price_1R1AQQ2M54cogX5deCkcEJxm",
+  sindiidi: process.env.PRICE_SINDIIDI!,
+  wakaana: process.env.PRICE_WAKAANA!,
+  jaalibatu: process.env.PRICE_JAALIBATU!,
+  mawaahibu: process.env.PRICE_MAWAAHIBU!,
+  midaadi: process.env.PRICE_MIDAADI!,
+  "fathul-fattah": process.env.PRICE_FATHUL_FATTAH!,
 };
 
-// ✅ Clean display format: Fathul_Fattah → Fathul Fattah
-const formatTierName = (slug: string) => slug.replace(/_/g, " ");
-
-/**
- * POST: Create Stripe session for KST Jaayante one-time donation
- */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { tier, priceId, donorName, email, isAnonymous, amount } = body;
 
-    // 🔐 Validation
-    if (!tier || !priceId || !priceIds[tier]) {
+    // ✅ Normalize tier slug (should match jaayanteTiers.slug)
+    const slug = tier?.toLowerCase().replace(/ /g, "-");
+
+    if (!slug || !priceId || !priceIds[slug]) {
       return NextResponse.json({ error: "Invalid tier or priceId" }, { status: 400 });
     }
 
@@ -41,15 +37,14 @@ export async function POST(req: NextRequest) {
 
     const receiptId = `KST-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://manchestermuridcommunity.org";
-    const displayTier = formatTierName(tier);
 
     const metadata = {
       receipt_id: receiptId,
       donor_name: name,
       donor_email: donorEmail,
       donation_amount: cleanAmount.toString(),
-      donation_reference: displayTier,
-      donation_tier: displayTier,
+      donation_reference: tier,
+      donation_tier: tier,
       donation_frequency: "One-time",
       donation_date: new Date().toLocaleString("en-GB", {
         timeZone: "Europe/London",
@@ -79,9 +74,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
-/**
- * GET: Retrieve Stripe session metadata for KST Jaayante success page
- */
 export async function GET(req: NextRequest) {
   const sessionId = req.nextUrl.searchParams.get("session_id");
   if (!sessionId) {
