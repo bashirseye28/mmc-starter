@@ -9,6 +9,7 @@ interface HeroProps {
   highlight: string;
   subtitle: string;
   image: string;
+  imageAlt?: string; // 👈 Add this line
   ctaText: string;
   ctaLink: string;
   ctaPrimaryIcon?: React.ReactNode;

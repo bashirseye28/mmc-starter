@@ -5,6 +5,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-02-24.acacia",
 });
 
+// ✅ Mapping of tiers to Stripe Price IDs
 const priceIds: Record<string, string> = {
   Sindiidi: "price_1R1ALk2M54cogX5dRpLwsrSl",
   Wakaana: "price_1R1ANE2M54cogX5dh5OVBIJu",
@@ -14,15 +15,18 @@ const priceIds: Record<string, string> = {
   Fathul_Fattah: "price_1R1AQQ2M54cogX5deCkcEJxm",
 };
 
-// ✅ Optional: Convert "Fathul_Fattah" → "Fathul Fattah"
+// ✅ Clean display format: Fathul_Fattah → Fathul Fattah
 const formatTierName = (slug: string) => slug.replace(/_/g, " ");
 
+/**
+ * POST: Create Stripe session for KST Jaayante one-time donation
+ */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { tier, priceId, donorName, email, isAnonymous, amount } = body;
 
-    // 🔒 Validate required fields
+    // 🔐 Validation
     if (!tier || !priceId || !priceIds[tier]) {
       return NextResponse.json({ error: "Invalid tier or priceId" }, { status: 400 });
     }
@@ -47,7 +51,9 @@ export async function POST(req: NextRequest) {
       donation_reference: displayTier,
       donation_tier: displayTier,
       donation_frequency: "One-time",
-      donation_date: new Date().toLocaleString("en-GB", { timeZone: "Europe/London" }),
+      donation_date: new Date().toLocaleString("en-GB", {
+        timeZone: "Europe/London",
+      }),
     };
 
     const session = await stripe.checkout.sessions.create({
@@ -70,5 +76,44 @@ export async function POST(req: NextRequest) {
   } catch (err: any) {
     console.error("❌ Jaayante Checkout Error:", err.message || err);
     return NextResponse.json({ error: "Failed to create session" }, { status: 500 });
+  }
+}
+
+/**
+ * GET: Retrieve Stripe session metadata for KST Jaayante success page
+ */
+export async function GET(req: NextRequest) {
+  const sessionId = req.nextUrl.searchParams.get("session_id");
+  if (!sessionId) {
+    return NextResponse.json({ error: "Missing session_id" }, { status: 400 });
+  }
+
+  try {
+    const session = await stripe.checkout.sessions.retrieve(sessionId, {
+      expand: ["payment_intent"],
+    });
+
+    const paymentIntent = session.payment_intent as Stripe.PaymentIntent | null;
+    const metadata = paymentIntent?.metadata || session.metadata || {};
+
+    const amount_total =
+      session.amount_total ||
+      paymentIntent?.amount ||
+      0;
+
+    return NextResponse.json({
+      amount_total,
+      donor_name: metadata.donor_name,
+      donor_email: metadata.donor_email,
+      donation_reference: metadata.donation_reference || metadata.donation_tier || "KST Jaayante",
+      donation_amount: metadata.donation_amount,
+      donation_frequency: metadata.donation_frequency,
+      donation_date: metadata.donation_date,
+      payment_method_types: session.payment_method_types,
+      receipt_id: metadata.receipt_id,
+    });
+  } catch (err: any) {
+    console.error("❌ Failed to retrieve KST session:", err.message || err);
+    return NextResponse.json({ error: "Session not found" }, { status: 404 });
   }
 }
