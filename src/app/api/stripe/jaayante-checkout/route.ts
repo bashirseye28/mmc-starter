@@ -44,7 +44,7 @@ export async function POST(req: Request) {
         payment_method_types: ['card'],
         line_items: [{ price: priceId, quantity: 1 }],
         mode: 'payment',
-        success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/donate/success?session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/donate/jaayante/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/donate/cancel`,
         customer_email: isAnonymous ? "donor@anonymous.com" : email.trim(),
         payment_intent_data: {
