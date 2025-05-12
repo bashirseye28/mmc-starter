@@ -49,8 +49,8 @@ const Footer = () => {
                 </Link>
               </li>
             ))}
-            <li><Link href="/privacy" className="hover:text-gold transition hover:underline">Privacy Policy</Link></li>
-            <li><Link href="/terms" className="hover:text-gold transition hover:underline">Terms of Use</Link></li>
+            {/* <li><Link href="/privacy" className="hover:text-gold transition hover:underline">Privacy Policy</Link></li> */}
+            {/* <li><Link href="/terms" className="hover:text-gold transition hover:underline">Terms of Use</Link></li> */}
           </ul>
         </div>
 
@@ -71,9 +71,6 @@ const Footer = () => {
           {/* ✅ Additional Engagement Links */}
           <Link href="/volunteer" className="mt-3 block text-sm hover:text-gold transition hover:underline">
             Become a Volunteer
-          </Link>
-          <Link href="/membership" className="mt-2 block text-sm hover:text-gold transition hover:underline">
-            Membership
           </Link>
         </div>
 
