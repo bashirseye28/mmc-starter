@@ -22,6 +22,15 @@ export default function SuccessPageContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('session_id');
 
+  const allowedReferences = [
+    "Help sponsor a Madrassah student’s learning materials.",
+    "Weekly Iftaar Contribution.",
+    "Adiyyah Tuuba – Sacred Offering.",
+    "Provide meals for those in need.",
+    "Support the KST Centre Project.",
+    "Large donor contributions towards major projects.",
+  ];
+
   const [donationDetails, setDonationDetails] = useState({
     receiptId: '',
     amount: 0,
@@ -55,10 +64,9 @@ export default function SuccessPageContent() {
               : 'Unknown',
             donorName: data.donor_name || 'Anonymous',
             donorEmail: data.donor_email || 'Not Provided',
-            reference:
-              data.donation_reference && data.donation_reference.trim().length > 0
-                ? data.donation_reference.trim()
-                : 'General Donation',
+            reference: allowedReferences.includes(data.donation_reference?.trim())
+              ? data.donation_reference.trim()
+              : 'General Donation',
             date: new Date().toLocaleDateString('en-GB', {
               day: '2-digit',
               month: 'long',

@@ -5,9 +5,20 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-02-24.acacia",
 });
 
-const sanitizeReference = (reference: string): string => {
-  if (typeof reference === "string" && reference.trim().length >= 3) {
-    return reference.trim();
+// Only allow specific reference values for suggested amounts
+const allowedReferences = [
+  "Help sponsor a Madrassah student’s learning materials.",
+  "Weekly Iftaar Contribution.",
+  "Adiyyah Tuuba – Sacred Offering.",
+  "Provide meals for those in need.",
+  "Support the KST Centre Project.",
+  "Large donor contributions towards major projects.",
+];
+
+const sanitizeReference = (ref: string | null | undefined): string => {
+  if (typeof ref === "string" && ref.trim().length >= 3) {
+    const cleaned = ref.trim();
+    return allowedReferences.includes(cleaned) ? cleaned : cleaned; // Accept custom reference too
   }
   return "General Donation";
 };
