@@ -92,15 +92,17 @@ const CustomAmount: React.FC<CustomAmountProps> = ({
               whileTap={{ scale: 0.95 }}
               onClick={() => handleSelectAmount(tier.amount)}
             >
-              {localSelectedAmount === tier.amount && <FontAwesomeIcon icon={faCheck} className="text-primary mb-1" />}
-              <p className="text-lg font-semibold">£{tier.amount}</p>
+              {localSelectedAmount === tier.amount && (
+                <FontAwesomeIcon icon={faCheck} className="text-primary mb-1" />
+              )}
+              <p className="text-lg font-semibold text-primary">£{tier.amount}</p>
               <p className="text-xs">{tier.description}</p>
             </motion.div>
           ))}
         </div>
 
         <div className="mt-8">
-          <label className="block text-lg font-semibold mb-2">Enter a Custom Amount:</label>
+          <label className="block text-lg font-semibold mb-2 text-primary">Enter a Custom Amount:</label>
           <div className="relative max-w-xs mx-auto">
             <span className="absolute left-4 top-3 text-primary font-semibold">£</span>
             <input
@@ -114,9 +116,9 @@ const CustomAmount: React.FC<CustomAmountProps> = ({
           </div>
         </div>
 
-        {!localSelectedAmount && (
+        {!localSelectedAmount && parseFloat(localCustomAmount) > 0 && (
           <div className="mt-6 max-w-xs mx-auto">
-            <label className="block text-sm font-semibold mb-2">
+            <label className="block text-sm font-semibold mb-2 text-primary">
               Donation Reference <span className="text-gray-500">(required)</span>
             </label>
             <input
