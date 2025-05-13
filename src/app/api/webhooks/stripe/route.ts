@@ -1,13 +1,12 @@
+// src/app/api/webhooks/stripe/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { buffer } from "micro";
 import { sendDonationReceipt } from "@/lib/emails/sendDonationReceipt";
 import { sendAdminNotification } from "@/lib/emails/sendAdminNotification";
 
-// Force Node runtime — no edge
 export const runtime = "nodejs";
 
-// Disable Next.js body parsing for raw Stripe signature verification
 export const config = {
   api: {
     bodyParser: false,
@@ -15,7 +14,7 @@ export const config = {
 };
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-02-24.acacia", // Use the same version Stripe shows in your dashboard
+  apiVersion: "2025-02-24.acacia",
 });
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
@@ -37,42 +36,53 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Webhook verification failed" }, { status: 400 });
   }
 
-  // ✅ Handle event types
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session;
-    const meta = session.metadata;
+  // 🔔 Handle supported events
+  const handleNotification = async (meta: Stripe.Metadata | null | undefined) => {
+    if (!meta?.donor_email) return;
 
-    if (!meta || !meta.donor_email) {
-      console.warn("⚠️ No metadata found on session:", session.id);
-      return NextResponse.json({ received: true });
+    await Promise.all([
+      sendDonationReceipt({
+        to: meta.donor_email,
+        name: meta.donor_name || "Donor",
+        amount: meta.donation_amount,
+        reference: meta.donation_reference,
+        date: meta.donation_date,
+        receiptId: meta.receipt_id,
+      }),
+      sendAdminNotification({
+        name: meta.donor_name || "Donor",
+        email: meta.donor_email,
+        amount: meta.donation_amount,
+        reference: meta.donation_reference,
+        frequency: meta.donation_frequency,
+        date: meta.donation_date,
+        receiptId: meta.receipt_id,
+      }),
+    ]);
+  };
+
+  switch (event.type) {
+    case "payment_intent.succeeded": {
+      const pi = event.data.object as Stripe.PaymentIntent;
+      await handleNotification(pi.metadata);
+      break;
     }
 
-    // Trigger both emails
-    try {
-      await Promise.all([
-        sendDonationReceipt({
-          to: meta.donor_email,
-          name: meta.donor_name || "Donor",
-          amount: meta.donation_amount,
-          reference: meta.donation_reference,
-          date: meta.donation_date,
-          receiptId: meta.receipt_id,
-        }),
-        sendAdminNotification({
-          name: meta.donor_name || "Donor",
-          email: meta.donor_email,
-          amount: meta.donation_amount,
-          reference: meta.donation_reference,
-          date: meta.donation_date,
-          receiptId: meta.receipt_id,
-          frequency: meta.donation_frequency || "N/A",
-        }),
-      ]);
-
-      console.log("📬 Receipt and admin email sent for:", session.id);
-    } catch (emailErr) {
-      console.error("❌ Email sending error:", emailErr);
+    case "invoice.paid": {
+      const invoice = event.data.object as Stripe.Invoice;
+      await handleNotification(invoice.metadata);
+      break;
     }
+
+    case "checkout.session.completed": {
+      const session = event.data.object as Stripe.Checkout.Session;
+      console.log("✅ Checkout session completed:", session.id);
+      await handleNotification(session.metadata); // 🔥 important in your case
+      break;
+    }
+
+    default:
+      console.log(`🔔 Unhandled event type: ${event.type}`);
   }
 
   return NextResponse.json({ received: true });
