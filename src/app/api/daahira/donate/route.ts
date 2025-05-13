@@ -5,13 +5,12 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-02-24.acacia",
 });
 
-// 🧼 Reference Sanitizer
+// 🧼 Sanitize donation reference
 const sanitizeReference = (
   ref: string | null | undefined,
   isCustom: boolean
 ): string => {
   if (!ref || typeof ref !== "string") return "General Donation";
-
   const cleaned = ref.trim().replace(/[.,;!?]+$/, "");
 
   const allowedReferences = [
@@ -23,14 +22,11 @@ const sanitizeReference = (
     "Large donor contributions towards major projects.",
   ];
 
-  return isCustom && cleaned.length >= 3
-    ? cleaned
-    : allowedReferences.includes(cleaned)
-    ? cleaned
-    : "General Donation";
+  return isCustom
+    ? cleaned.length >= 3 ? cleaned : "General Donation"
+    : allowedReferences.includes(cleaned) ? cleaned : "General Donation";
 };
 
-// ✅ POST: Create Stripe Checkout Session
 export async function POST(req: NextRequest) {
   try {
     const { name, email, amount, frequency, reference, isCustom } = await req.json();
@@ -42,8 +38,8 @@ export async function POST(req: NextRequest) {
     const donorName = name?.trim() || "Anonymous Donor";
     const donorEmail = /^\S+@\S+\.\S+$/.test(email) ? email.trim() : "anonymous@donation.com";
     const donationReference = sanitizeReference(reference, isCustom);
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://manchestermuridcommunity.org";
     const receiptId = `DON-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://manchestermuridcommunity.org";
 
     const metadata = {
       receipt_id: receiptId,
@@ -57,15 +53,7 @@ export async function POST(req: NextRequest) {
       }),
     };
 
-    const allowedTiers = ["10", "15", "25", "50", "100", "250"];
-    const isPredefined = allowedTiers.includes(String(amount));
-
-    if (frequency !== "one-time" && !isPredefined) {
-      return NextResponse.json({
-        error: "Recurring donations are only available for suggested amounts.",
-      }, { status: 400 });
-    }
-
+    // ✅ One-time donation logic
     if (frequency === "one-time") {
       const session = await stripe.checkout.sessions.create({
         mode: "payment",
@@ -90,6 +78,14 @@ export async function POST(req: NextRequest) {
       });
 
       return NextResponse.json({ sessionId: session.id, url: session.url });
+    }
+
+    // ✅ Recurring donation logic (only predefined amounts)
+    const allowedTiers = ["10", "15", "25", "50", "100", "250"];
+    if (!allowedTiers.includes(String(amount))) {
+      return NextResponse.json({
+        error: "Recurring donations are only available for suggested amounts.",
+      }, { status: 400 });
     }
 
     const priceMap: Record<string, Record<string, string>> = {
@@ -127,9 +123,7 @@ export async function POST(req: NextRequest) {
 
     const priceId = priceMap[String(amount)]?.[frequency];
     if (!priceId) {
-      return NextResponse.json({
-        error: "Invalid donation frequency or amount.",
-      }, { status: 400 });
+      return NextResponse.json({ error: "Invalid frequency or tier." }, { status: 400 });
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -149,7 +143,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// ✅ GET: Retrieve metadata for receipt/success page
 export async function GET(req: NextRequest) {
   const sessionId = req.nextUrl.searchParams.get("session_id");
   if (!sessionId) {
