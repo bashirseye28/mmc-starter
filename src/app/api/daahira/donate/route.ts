@@ -33,30 +33,17 @@ const sanitizeReference = (
 // ✅ POST: Create Stripe Checkout Session
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, amount, frequency, reference, isCustom } =
-      await req.json();
+    const { name, email, amount, frequency, reference, isCustom } = await req.json();
 
     if (!amount || !frequency || !email) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     const donorName = name?.trim() || "Anonymous Donor";
-    const donorEmail =
-      /^\S+@\S+\.\S+$/.test(email) && email.trim().length
-        ? email.trim()
-        : "anonymous@donation.com";
-
+    const donorEmail = /^\S+@\S+\.\S+$/.test(email) ? email.trim() : "anonymous@donation.com";
     const donationReference = sanitizeReference(reference, isCustom);
-    const baseUrl =
-      process.env.NEXT_PUBLIC_BASE_URL ||
-      "https://manchestermuridcommunity.org";
-
-    const receiptId = `DON-${Date.now()}-${Math.floor(
-      Math.random() * 10000
-    )}`;
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://manchestermuridcommunity.org";
+    const receiptId = `DON-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 
     const metadata = {
       receipt_id: receiptId,
@@ -70,10 +57,9 @@ export async function POST(req: NextRequest) {
       }),
     };
 
-    let session;
-
+    // One-Time Donation
     if (frequency === "one-time") {
-      session = await stripe.checkout.sessions.create({
+      const session = await stripe.checkout.sessions.create({
         mode: "payment",
         payment_method_types: ["card"],
         customer_email: donorEmail,
@@ -94,79 +80,78 @@ export async function POST(req: NextRequest) {
         success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${baseUrl}/donate?canceled=true`,
       });
-    } else {
-      const priceMap: Record<string, Record<string, string>> = {
-        "10": {
-          weekly: process.env.PRICE_10_WEEKLY!,
-          monthly: process.env.PRICE_10_MONTHLY!,
-          yearly: process.env.PRICE_10_YEARLY!,
-        },
-        "15": {
-          weekly: process.env.PRICE_15_WEEKLY!,
-          monthly: process.env.PRICE_15_MONTHLY!,
-          yearly: process.env.PRICE_15_YEARLY!,
-        },
-        "25": {
-          weekly: process.env.PRICE_25_WEEKLY!,
-          monthly: process.env.PRICE_25_MONTHLY!,
-          yearly: process.env.PRICE_25_YEARLY!,
-        },
-        "50": {
-          weekly: process.env.PRICE_50_WEEKLY!,
-          monthly: process.env.PRICE_50_MONTHLY!,
-          yearly: process.env.PRICE_50_YEARLY!,
-        },
-        "100": {
-          weekly: process.env.PRICE_100_WEEKLY!,
-          monthly: process.env.PRICE_100_MONTHLY!,
-          yearly: process.env.PRICE_100_YEARLY!,
-        },
-        "250": {
-          weekly: process.env.PRICE_250_WEEKLY!,
-          monthly: process.env.PRICE_250_MONTHLY!,
-          yearly: process.env.PRICE_250_YEARLY!,
-        },
-      };
 
-      const priceId = priceMap[String(amount)]?.[frequency];
-      if (!priceId) {
-        return NextResponse.json(
-          { error: "Invalid donation frequency or amount" },
-          { status: 400 }
-        );
-      }
-
-      session = await stripe.checkout.sessions.create({
-        mode: "subscription",
-        payment_method_types: ["card"],
-        customer_email: donorEmail,
-        subscription_data: {
-          metadata,
-        },
-        line_items: [{ price: priceId, quantity: 1 }],
-        success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${baseUrl}/donate?canceled=true`,
-      });
+      return NextResponse.json({ sessionId: session.id, url: session.url });
     }
+
+    // Recurring Donation (Suggested Amounts Only)
+    const priceMap: Record<string, Record<string, string>> = {
+      "10": {
+        weekly: process.env.PRICE_10_WEEKLY!,
+        monthly: process.env.PRICE_10_MONTHLY!,
+        yearly: process.env.PRICE_10_YEARLY!,
+      },
+      "15": {
+        weekly: process.env.PRICE_15_WEEKLY!,
+        monthly: process.env.PRICE_15_MONTHLY!,
+        yearly: process.env.PRICE_15_YEARLY!,
+      },
+      "25": {
+        weekly: process.env.PRICE_25_WEEKLY!,
+        monthly: process.env.PRICE_25_MONTHLY!,
+        yearly: process.env.PRICE_25_YEARLY!,
+      },
+      "50": {
+        weekly: process.env.PRICE_50_WEEKLY!,
+        monthly: process.env.PRICE_50_MONTHLY!,
+        yearly: process.env.PRICE_50_YEARLY!,
+      },
+      "100": {
+        weekly: process.env.PRICE_100_WEEKLY!,
+        monthly: process.env.PRICE_100_MONTHLY!,
+        yearly: process.env.PRICE_100_YEARLY!,
+      },
+      "250": {
+        weekly: process.env.PRICE_250_WEEKLY!,
+        monthly: process.env.PRICE_250_MONTHLY!,
+        yearly: process.env.PRICE_250_YEARLY!,
+      },
+    };
+
+    const priceId = priceMap[String(amount)]?.[frequency];
+    if (!priceId) {
+      return NextResponse.json({
+        error: "Recurring donations are only available for suggested amounts.",
+      }, { status: 400 });
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      payment_method_types: ["card"],
+      customer_email: donorEmail,
+      subscription_data: {
+        metadata,
+      },
+      payment_intent_data: {
+        metadata, // ✅ ensures it's attached to the actual charge
+      },
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/donate?canceled=true`,
+    });
 
     return NextResponse.json({ sessionId: session.id, url: session.url });
   } catch (error: any) {
     console.error("❌ Stripe Checkout Error:", error.message || error);
-    return NextResponse.json(
-      { error: "Stripe session creation failed" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Stripe session creation failed" }, { status: 500 });
   }
 }
 
-// ✅ GET: Retrieve donation metadata from Stripe
+// ✅ GET: Retrieve metadata for receipt/success page
 export async function GET(req: NextRequest) {
   const sessionId = req.nextUrl.searchParams.get("session_id");
   if (!sessionId) {
-    return NextResponse.json(
-      { error: "Missing session_id" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Missing session_id" }, { status: 400 });
   }
 
   try {
@@ -180,8 +165,7 @@ export async function GET(req: NextRequest) {
 
     const paymentIntent = session.payment_intent as Stripe.PaymentIntent | null;
     const subscription = session.subscription as Stripe.Subscription | null;
-    const invoiceIntent = (subscription?.latest_invoice as any)
-      ?.payment_intent as Stripe.PaymentIntent | null;
+    const invoiceIntent = (subscription?.latest_invoice as any)?.payment_intent as Stripe.PaymentIntent | null;
 
     const metadata = {
       ...subscription?.metadata,
