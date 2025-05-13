@@ -12,7 +12,7 @@ const sanitizeReference = (
 ): string => {
   if (!ref || typeof ref !== "string") return "General Donation";
 
-  const cleaned = ref.trim();
+  const cleaned = ref.trim().replace(/[.,;!?]+$/, ""); // Strip trailing punctuation
 
   const allowedReferences = [
     "Help sponsor a Madrassah student’s learning materials.",
@@ -57,6 +57,16 @@ export async function POST(req: NextRequest) {
       }),
     };
 
+    // 🔁 Limit recurring to only suggested tiers
+    const allowedTiers = ["10", "15", "25", "50", "100", "250"];
+    const isPredefined = allowedTiers.includes(String(amount));
+
+    if (frequency !== "one-time" && !isPredefined) {
+      return NextResponse.json({
+        error: "Recurring donations are only available for suggested amounts.",
+      }, { status: 400 });
+    }
+
     // One-Time Donation
     if (frequency === "one-time") {
       const session = await stripe.checkout.sessions.create({
@@ -84,7 +94,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ sessionId: session.id, url: session.url });
     }
 
-    // Recurring Donation (Suggested Amounts Only)
+    // Recurring Donation
     const priceMap: Record<string, Record<string, string>> = {
       "10": {
         weekly: process.env.PRICE_10_WEEKLY!,
@@ -121,7 +131,7 @@ export async function POST(req: NextRequest) {
     const priceId = priceMap[String(amount)]?.[frequency];
     if (!priceId) {
       return NextResponse.json({
-        error: "Recurring donations are only available for suggested amounts.",
+        error: "Invalid donation frequency or amount.",
       }, { status: 400 });
     }
 
@@ -129,12 +139,8 @@ export async function POST(req: NextRequest) {
       mode: "subscription",
       payment_method_types: ["card"],
       customer_email: donorEmail,
-      subscription_data: {
-        metadata,
-      },
-      payment_intent_data: {
-        metadata, // ✅ ensures it's attached to the actual charge
-      },
+      subscription_data: { metadata },
+      payment_intent_data: { metadata },
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/donate?canceled=true`,
