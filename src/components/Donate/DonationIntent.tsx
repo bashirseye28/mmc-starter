@@ -46,15 +46,23 @@ const DonationIntent: React.FC<Props> = ({ onContinue }) => {
   const allowRecurring = selectedAmount !== null;
 
   const handleContinue = () => {
-    if (!amount || amount < 1) return setError("Please enter a valid donation amount.");
-    if (!frequency) return setError("Please select a donation frequency.");
+    if (!amount || amount < 1) {
+      setError("Please enter a valid donation amount.");
+      return;
+    }
 
-    const reference = selectedAmount
-      ? suggestedAmounts.find((s) => s.amount === selectedAmount)?.description || "General Donation"
-      : customReference.trim();
+    if (!frequency) {
+      setError("Please select a donation frequency.");
+      return;
+    }
+
+    const reference = isCustom
+      ? customReference.trim()
+      : suggestedAmounts.find((s) => s.amount === selectedAmount)?.description || "General Donation";
 
     if (isCustom && reference.length < 3) {
-      return setError("Please provide a reference for your donation.");
+      setError("Please provide a reference for your donation.");
+      return;
     }
 
     setError("");
@@ -135,7 +143,6 @@ const DonationIntent: React.FC<Props> = ({ onContinue }) => {
               placeholder="e.g. Zakat, KST Project"
               value={customReference}
               onChange={(e) => setCustomReference(e.target.value)}
-              autoFocus
             />
           </div>
         )}
@@ -149,14 +156,20 @@ const DonationIntent: React.FC<Props> = ({ onContinue }) => {
                 <button
                   key={f.value}
                   onClick={() =>
-                    allowRecurring || f.value === "one-time" ? setFrequency(f.value) : null
+                    allowRecurring || f.value === "one-time"
+                      ? setFrequency(f.value)
+                      : null
                   }
                   disabled={!allowRecurring && f.value !== "one-time"}
                   className={`px-6 py-2 rounded-md border-2 font-medium transition ${
                     frequency === f.value
                       ? "bg-gold border-gold text-primary"
                       : "bg-white border-gray-200 hover:border-gold"
-                  } ${!allowRecurring && f.value !== "one-time" ? "opacity-50 cursor-not-allowed" : ""}`}
+                  } ${
+                    !allowRecurring && f.value !== "one-time"
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                  }`}
                 >
                   {f.label}
                 </button>
@@ -170,9 +183,9 @@ const DonationIntent: React.FC<Props> = ({ onContinue }) => {
           </div>
         )}
 
-        {/* Error Message */}
+        {/* Error */}
         {error && (
-          <p role="alert" className="text-red-600 font-medium mb-4">
+          <p className="text-red-600 font-medium mb-4" role="alert">
             {error}
           </p>
         )}
@@ -183,9 +196,7 @@ const DonationIntent: React.FC<Props> = ({ onContinue }) => {
           whileTap={{ scale: 0.95 }}
           onClick={handleContinue}
           disabled={
-            !amount ||
-            !frequency ||
-            (isCustom && customReference.trim().length < 3)
+            !amount || !frequency || (isCustom && customReference.trim().length < 3)
           }
           className={`mt-4 px-8 py-3 rounded-md font-semibold transition shadow-md ${
             amount &&

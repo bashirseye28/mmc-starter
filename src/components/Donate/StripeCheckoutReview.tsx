@@ -79,17 +79,24 @@ const StripeCheckoutReview: React.FC<StripeCheckoutReviewProps> = ({
             {anonymous ? "Anonymous Donor" : name}
           </p>
           <p>
-            <span className="font-semibold text-primary">Email:</span> {email}
+            <span className="font-semibold text-primary">Email:</span>{" "}
+            {anonymous ? "Hidden" : email}
           </p>
           <p>
-            <span className="font-semibold text-primary">Frequency:</span> {frequency}
+            <span className="font-semibold text-primary">Frequency:</span>{" "}
+            {frequency}
           </p>
           <p>
-            <span className="font-semibold text-primary">Reference:</span> {reference}
+            <span className="font-semibold text-primary">Reference:</span>{" "}
+            {reference}
           </p>
         </div>
 
-        {error && <p className="text-red-600 font-medium mb-4">{error}</p>}
+        {error && (
+          <p className="text-red-600 font-medium mb-4" role="alert">
+            {error}
+          </p>
+        )}
 
         <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
           <button
