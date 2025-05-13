@@ -5,7 +5,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-02-24.acacia",
 });
 
-// Sanitize donation reference
+// 🧼 Sanitize donation reference
 const sanitizeReference = (
   ref: string | null | undefined,
   isCustom: boolean
@@ -27,7 +27,6 @@ const sanitizeReference = (
     : allowedReferences.includes(cleaned) ? cleaned : "General Donation";
 };
 
-// ✅ POST: Create Stripe Checkout Session
 export async function POST(req: NextRequest) {
   try {
     const { name, email, amount, frequency, reference, isCustom } = await req.json();
@@ -54,7 +53,7 @@ export async function POST(req: NextRequest) {
       }),
     };
 
-    // ✅ Handle One-Time Donation
+    // ✅ One-time donation logic
     if (frequency === "one-time") {
       const session = await stripe.checkout.sessions.create({
         mode: "payment",
@@ -81,7 +80,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ sessionId: session.id, url: session.url });
     }
 
-    // ✅ Handle Recurring Donations
+    // ✅ Recurring donation logic (only predefined amounts)
     const allowedTiers = ["10", "15", "25", "50", "100", "250"];
     if (!allowedTiers.includes(String(amount))) {
       return NextResponse.json({
@@ -131,16 +130,10 @@ export async function POST(req: NextRequest) {
       mode: "subscription",
       payment_method_types: ["card"],
       customer_email: donorEmail,
-      customer_creation: "always",
-      subscription_data: {
-        metadata,
-      },
-      invoice_creation: {
-        enabled: true,
-      },
+      subscription_data: { metadata },
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/donate/cancel`,
+      cancel_url: `${baseUrl}/donate?canceled=true`,
     });
 
     return NextResponse.json({ sessionId: session.id, url: session.url });
@@ -150,7 +143,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// ✅ GET: Retrieve session & metadata
 export async function GET(req: NextRequest) {
   const sessionId = req.nextUrl.searchParams.get("session_id");
   if (!sessionId) {
