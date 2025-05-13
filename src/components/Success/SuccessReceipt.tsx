@@ -98,7 +98,7 @@ const SuccessReceipt: React.FC<SuccessReceiptProps> = ({
     doc.setFont("helvetica", "normal");
     doc.text("Registered Charity No: 1194666", 105, y, { align: "center" });
     y += 5;
-    doc.text("info@manchestermuridcommunity.org | +44 7541 475 547", 105, y, {
+    doc.text("donate@manchestermuridcommunity.org | +44 7541 475 547", 105, y, {
       align: "center",
     });
 

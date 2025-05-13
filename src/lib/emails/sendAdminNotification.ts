@@ -24,7 +24,7 @@ export async function sendAdminNotification({
 }: AdminNotificationProps) {
   try {
     await resend.emails.send({
-      from: "MMC Donations <donate@manchestermuridcommunity.org>",
+      from: "MMC Donations <info@manchestermuridcommunity.org>",
       to: ["admin@manchestermuridcommunity.org"], // 🔁 Replace or add multiple if needed
       subject: `✅ New MMC Donation Received - £${amount}`,
       text: `
