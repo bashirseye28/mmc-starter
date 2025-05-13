@@ -5,7 +5,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-02-24.acacia",
 });
 
-// 🟢 Sanitize donation reference
+// 🧼 Reference Sanitizer
 const sanitizeReference = (
   ref: string | null | undefined,
   isCustom: boolean
@@ -23,27 +23,40 @@ const sanitizeReference = (
     "Large donor contributions towards major projects.",
   ];
 
-  if (isCustom && cleaned.length >= 3) {
-    return cleaned;
-  }
-
-  return allowedReferences.includes(cleaned) ? cleaned : "General Donation";
+  return isCustom && cleaned.length >= 3
+    ? cleaned
+    : allowedReferences.includes(cleaned)
+    ? cleaned
+    : "General Donation";
 };
 
-// ✅ POST: Create Stripe checkout session
+// ✅ POST: Create Stripe Checkout Session
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, amount, frequency, reference, isCustom } = await req.json();
+    const { name, email, amount, frequency, reference, isCustom } =
+      await req.json();
 
     if (!amount || !frequency || !email) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
     }
 
     const donorName = name?.trim() || "Anonymous Donor";
-    const donorEmail = /^\S+@\S+\.\S+$/.test(email) ? email.trim() : "anonymous@donation.com";
+    const donorEmail =
+      /^\S+@\S+\.\S+$/.test(email) && email.trim().length
+        ? email.trim()
+        : "anonymous@donation.com";
+
     const donationReference = sanitizeReference(reference, isCustom);
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://manchestermuridcommunity.org";
-    const receiptId = `DON-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+    const baseUrl =
+      process.env.NEXT_PUBLIC_BASE_URL ||
+      "https://manchestermuridcommunity.org";
+
+    const receiptId = `DON-${Date.now()}-${Math.floor(
+      Math.random() * 10000
+    )}`;
 
     const metadata = {
       receipt_id: receiptId,
@@ -52,7 +65,9 @@ export async function POST(req: NextRequest) {
       donation_amount: amount.toString(),
       donation_frequency: frequency,
       donation_reference: donationReference,
-      donation_date: new Date().toLocaleString("en-GB", { timeZone: "Europe/London" }),
+      donation_date: new Date().toLocaleString("en-GB", {
+        timeZone: "Europe/London",
+      }),
     };
 
     let session;
@@ -115,14 +130,19 @@ export async function POST(req: NextRequest) {
 
       const priceId = priceMap[String(amount)]?.[frequency];
       if (!priceId) {
-        return NextResponse.json({ error: "Invalid donation frequency or amount" }, { status: 400 });
+        return NextResponse.json(
+          { error: "Invalid donation frequency or amount" },
+          { status: 400 }
+        );
       }
 
       session = await stripe.checkout.sessions.create({
         mode: "subscription",
         payment_method_types: ["card"],
         customer_email: donorEmail,
-        subscription_data: { metadata },
+        subscription_data: {
+          metadata,
+        },
         line_items: [{ price: priceId, quantity: 1 }],
         success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${baseUrl}/donate?canceled=true`,
@@ -132,33 +152,47 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ sessionId: session.id, url: session.url });
   } catch (error: any) {
     console.error("❌ Stripe Checkout Error:", error.message || error);
-    return NextResponse.json({ error: "Stripe session creation failed" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Stripe session creation failed" },
+      { status: 500 }
+    );
   }
 }
 
-// ✅ GET: Retrieve session and metadata
+// ✅ GET: Retrieve donation metadata from Stripe
 export async function GET(req: NextRequest) {
   const sessionId = req.nextUrl.searchParams.get("session_id");
   if (!sessionId) {
-    return NextResponse.json({ error: "Missing session_id" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Missing session_id" },
+      { status: 400 }
+    );
   }
 
   try {
     const session = await stripe.checkout.sessions.retrieve(sessionId, {
-      expand: ["payment_intent", "subscription"],
+      expand: [
+        "payment_intent",
+        "subscription",
+        "subscription.latest_invoice.payment_intent",
+      ],
     });
 
     const paymentIntent = session.payment_intent as Stripe.PaymentIntent | null;
     const subscription = session.subscription as Stripe.Subscription | null;
+    const invoiceIntent = (subscription?.latest_invoice as any)
+      ?.payment_intent as Stripe.PaymentIntent | null;
 
     const metadata = {
-      ...paymentIntent?.metadata,
       ...subscription?.metadata,
+      ...invoiceIntent?.metadata,
+      ...paymentIntent?.metadata,
     };
 
     const amount_total =
       session.amount_total ||
       paymentIntent?.amount ||
+      invoiceIntent?.amount ||
       (subscription?.items.data[0]?.price.unit_amount ?? 0) *
         (subscription?.items.data[0]?.quantity ?? 1);
 

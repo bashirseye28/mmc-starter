@@ -43,14 +43,11 @@ const DonationIntent: React.FC<Props> = ({ onContinue }) => {
   const isCustom = selectedAmount === null && customAmount.trim() !== "";
   const parsedAmount = parseFloat(customAmount.trim());
   const amount = selectedAmount ?? (isNaN(parsedAmount) ? 0 : parsedAmount);
+  const allowRecurring = selectedAmount !== null;
 
   const handleContinue = () => {
-    if (!amount || amount < 1) {
-      return setError("Please enter a valid donation amount.");
-    }
-    if (!frequency) {
-      return setError("Please select a donation frequency.");
-    }
+    if (!amount || amount < 1) return setError("Please enter a valid donation amount.");
+    if (!frequency) return setError("Please select a donation frequency.");
 
     const reference = selectedAmount
       ? suggestedAmounts.find((s) => s.amount === selectedAmount)?.description || "General Donation"
@@ -84,6 +81,7 @@ const DonationIntent: React.FC<Props> = ({ onContinue }) => {
                 setSelectedAmount(tier.amount);
                 setCustomAmount("");
                 setCustomReference("");
+                setFrequency(null);
               }}
               className={`p-4 rounded-lg h-28 text-sm font-semibold transition border-2 ${
                 selectedAmount === tier.amount
@@ -116,6 +114,7 @@ const DonationIntent: React.FC<Props> = ({ onContinue }) => {
               value={customAmount}
               onChange={(e) => {
                 setSelectedAmount(null);
+                setFrequency(null);
                 setCustomAmount(e.target.value);
               }}
             />
@@ -147,17 +146,23 @@ const DonationIntent: React.FC<Props> = ({ onContinue }) => {
               {frequencies.map((f) => (
                 <button
                   key={f.value}
-                  onClick={() => setFrequency(f.value)}
+                  onClick={() => allowRecurring || f.value === "one-time" ? setFrequency(f.value) : null}
+                  disabled={!allowRecurring && f.value !== "one-time"}
                   className={`px-6 py-2 rounded-md border-2 font-medium transition ${
                     frequency === f.value
                       ? "bg-gold border-gold text-primary"
                       : "bg-white border-gray-200 hover:border-gold"
-                  }`}
+                  } ${!allowRecurring && f.value !== "one-time" ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
                   {f.label}
                 </button>
               ))}
             </div>
+            {!allowRecurring && (
+              <p className="text-sm text-red-600 mt-2">
+                Recurring donations (weekly/monthly) are only available for suggested amounts.
+              </p>
+            )}
           </div>
         )}
 
