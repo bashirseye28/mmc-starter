@@ -26,8 +26,7 @@ export type DonationIntentValues = {
   amount: number;
   frequency: Frequency;
   reference: string;
-  isCustom: boolean; // ✅ add this
-
+  isCustom: boolean;
 };
 
 interface Props {
@@ -41,21 +40,27 @@ const DonationIntent: React.FC<Props> = ({ onContinue }) => {
   const [frequency, setFrequency] = useState<Frequency | null>(null);
   const [error, setError] = useState("");
 
-  const isCustom = selectedAmount === null && customAmount !== "";
-  const amount = selectedAmount ?? parseFloat(customAmount);
+  const isCustom = selectedAmount === null && customAmount.trim() !== "";
+  const parsedAmount = parseFloat(customAmount.trim());
+  const amount = selectedAmount ?? (isNaN(parsedAmount) ? 0 : parsedAmount);
 
   const handleContinue = () => {
-    if (!amount || amount < 1) return setError("Please enter a valid donation amount.");
-    if (!frequency) return setError("Please select a donation frequency.");
+    if (!amount || amount < 1) {
+      return setError("Please enter a valid donation amount.");
+    }
+    if (!frequency) {
+      return setError("Please select a donation frequency.");
+    }
 
     const reference = selectedAmount
       ? suggestedAmounts.find((s) => s.amount === selectedAmount)?.description || "General Donation"
       : customReference.trim();
 
-    if (isCustom && reference.length < 3) return setError("Please provide a reference for your donation.");
+    if (isCustom && reference.length < 3) {
+      return setError("Please provide a reference for your donation.");
+    }
 
     setError("");
-
     onContinue({ amount, frequency, reference, isCustom });
   };
 
@@ -63,7 +68,8 @@ const DonationIntent: React.FC<Props> = ({ onContinue }) => {
     <section id="choose-amount" className="py-20 bg-lightBg text-center">
       <div className="container max-w-3xl mx-auto px-6">
         <h2 className="text-4xl font-bold font-heading mb-8">
-          <span className="text-primary">Choose Your</span> <span className="text-gold">Donation</span>
+          <span className="text-primary">Choose Your</span>{" "}
+          <span className="text-gold">Donation</span>
         </h2>
 
         {/* Suggested Amounts */}
@@ -96,11 +102,14 @@ const DonationIntent: React.FC<Props> = ({ onContinue }) => {
 
         {/* Custom Amount */}
         <div className="mb-6">
-          <label className="block font-semibold text-primary mb-2">Or enter a custom amount</label>
+          <label className="block font-semibold text-primary mb-2">
+            Or enter a custom amount
+          </label>
           <div className="relative max-w-xs mx-auto">
             <span className="absolute left-3 top-3 font-bold text-primary">£</span>
             <input
               type="number"
+              inputMode="decimal"
               className="pl-7 pr-4 py-2 w-full border rounded-md text-center"
               placeholder="e.g. 20"
               min={1}
@@ -113,7 +122,7 @@ const DonationIntent: React.FC<Props> = ({ onContinue }) => {
           </div>
         </div>
 
-        {/* Reference */}
+        {/* Custom Reference Input */}
         {isCustom && (
           <div className="mb-6 max-w-xs mx-auto">
             <label className="block text-sm font-semibold text-primary mb-2">
@@ -130,7 +139,7 @@ const DonationIntent: React.FC<Props> = ({ onContinue }) => {
           </div>
         )}
 
-        {/* Frequency */}
+        {/* Frequency Selection */}
         {amount > 0 && (!isCustom || customReference.trim().length >= 3) && (
           <div className="mb-8">
             <h3 className="text-lg font-semibold text-primary mb-4">Select Frequency</h3>
@@ -152,10 +161,10 @@ const DonationIntent: React.FC<Props> = ({ onContinue }) => {
           </div>
         )}
 
-        {/* Error */}
+        {/* Error Message */}
         {error && <p className="text-red-600 font-medium mb-4">{error}</p>}
 
-        {/* Continue */}
+        {/* Continue Button */}
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.95 }}
