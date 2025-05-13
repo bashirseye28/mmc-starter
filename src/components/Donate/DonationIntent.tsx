@@ -107,10 +107,11 @@ const DonationIntent: React.FC<Props> = ({ onContinue }) => {
             <span className="absolute left-3 top-3 font-bold text-primary">£</span>
             <input
               type="number"
+              step="0.01"
+              min={1}
               inputMode="decimal"
               className="pl-7 pr-4 py-2 w-full border rounded-md text-center"
               placeholder="e.g. 20"
-              min={1}
               value={customAmount}
               onChange={(e) => {
                 setSelectedAmount(null);
@@ -134,6 +135,7 @@ const DonationIntent: React.FC<Props> = ({ onContinue }) => {
               placeholder="e.g. Zakat, KST Project"
               value={customReference}
               onChange={(e) => setCustomReference(e.target.value)}
+              autoFocus
             />
           </div>
         )}
@@ -146,7 +148,9 @@ const DonationIntent: React.FC<Props> = ({ onContinue }) => {
               {frequencies.map((f) => (
                 <button
                   key={f.value}
-                  onClick={() => allowRecurring || f.value === "one-time" ? setFrequency(f.value) : null}
+                  onClick={() =>
+                    allowRecurring || f.value === "one-time" ? setFrequency(f.value) : null
+                  }
                   disabled={!allowRecurring && f.value !== "one-time"}
                   className={`px-6 py-2 rounded-md border-2 font-medium transition ${
                     frequency === f.value
@@ -167,7 +171,11 @@ const DonationIntent: React.FC<Props> = ({ onContinue }) => {
         )}
 
         {/* Error Message */}
-        {error && <p className="text-red-600 font-medium mb-4">{error}</p>}
+        {error && (
+          <p role="alert" className="text-red-600 font-medium mb-4">
+            {error}
+          </p>
+        )}
 
         {/* Continue Button */}
         <motion.button

@@ -43,7 +43,7 @@ const DonatePage = () => {
           amount={donation.amount}
           frequency={donation.frequency}
           reference={donation.reference}
-          isCustom={donation.isCustom} // ✅ This was missing
+          isCustom={donation.isCustom} // ✅ Pass isCustom to API
           name={donor.name}
           email={donor.email}
           anonymous={donor.anonymous}

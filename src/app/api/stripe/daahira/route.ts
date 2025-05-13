@@ -12,7 +12,7 @@ const sanitizeReference = (
 ): string => {
   if (!ref || typeof ref !== "string") return "General Donation";
 
-  const cleaned = ref.trim().replace(/[.,;!?]+$/, ""); // Strip trailing punctuation
+  const cleaned = ref.trim().replace(/[.,;!?]+$/, "");
 
   const allowedReferences = [
     "Help sponsor a Madrassah student’s learning materials.",
@@ -57,7 +57,6 @@ export async function POST(req: NextRequest) {
       }),
     };
 
-    // 🔁 Limit recurring to only suggested tiers
     const allowedTiers = ["10", "15", "25", "50", "100", "250"];
     const isPredefined = allowedTiers.includes(String(amount));
 
@@ -67,7 +66,6 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    // One-Time Donation
     if (frequency === "one-time") {
       const session = await stripe.checkout.sessions.create({
         mode: "payment",
@@ -94,7 +92,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ sessionId: session.id, url: session.url });
     }
 
-    // Recurring Donation
     const priceMap: Record<string, Record<string, string>> = {
       "10": {
         weekly: process.env.PRICE_10_WEEKLY!,
@@ -140,7 +137,6 @@ export async function POST(req: NextRequest) {
       payment_method_types: ["card"],
       customer_email: donorEmail,
       subscription_data: { metadata },
-      payment_intent_data: { metadata },
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/donate?canceled=true`,
