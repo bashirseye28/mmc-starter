@@ -28,7 +28,7 @@ const DonatePage = () => {
       {donation && !donor && (
         <DonorForm
           onSubmit={(values) => setDonor(values)}
-          onBack={() => setDonation(null)} // ✅ Added to fix the error
+          onBack={() => setDonation(null)}
           defaultValues={{
             name: "",
             email: "",
@@ -43,6 +43,7 @@ const DonatePage = () => {
           amount={donation.amount}
           frequency={donation.frequency}
           reference={donation.reference}
+          isCustom={donation.isCustom} // ✅ This was missing
           name={donor.name}
           email={donor.email}
           anonymous={donor.anonymous}

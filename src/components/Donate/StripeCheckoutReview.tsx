@@ -11,7 +11,8 @@ interface StripeCheckoutReviewProps {
   name: string;
   email: string;
   anonymous: boolean;
-  onReturn: () => void; // renamed from onEdit
+  isCustom: boolean;
+  onReturn: () => void;
 }
 
 const StripeCheckoutReview: React.FC<StripeCheckoutReviewProps> = ({
@@ -21,6 +22,7 @@ const StripeCheckoutReview: React.FC<StripeCheckoutReviewProps> = ({
   name,
   email,
   anonymous,
+  isCustom,
   onReturn,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -35,7 +37,14 @@ const StripeCheckoutReview: React.FC<StripeCheckoutReviewProps> = ({
       const response = await fetch("/api/stripe/daahira", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount, frequency, reference, name, email }),
+        body: JSON.stringify({
+          amount,
+          frequency,
+          reference,
+          name,
+          email,
+          isCustom,
+        }),
       });
 
       const data = await response.json();
@@ -54,19 +63,16 @@ const StripeCheckoutReview: React.FC<StripeCheckoutReviewProps> = ({
   return (
     <section className="py-20 bg-white text-center px-6">
       <div className="max-w-xl mx-auto bg-lightBg rounded-2xl shadow-lg border p-8">
-        {/* Heading */}
         <h2 className="text-3xl font-heading font-bold text-primary mb-4">
           Confirm <span className="text-gold">Your Donation</span>
         </h2>
 
-        {/* Summary */}
         <p className="text-lg text-gray-700 mb-6">
           You are donating <strong className="text-primary">£{amount}</strong>{" "}
           <span className="text-darkText">({frequency})</span> toward{" "}
           <strong className="text-primary">{reference}</strong>.
         </p>
 
-        {/* Details */}
         <div className="text-left mb-6 space-y-2 text-sm sm:text-base">
           <p>
             <span className="font-semibold text-primary">Donor:</span>{" "}
@@ -83,10 +89,8 @@ const StripeCheckoutReview: React.FC<StripeCheckoutReviewProps> = ({
           </p>
         </div>
 
-        {/* Error */}
         {error && <p className="text-red-600 font-medium mb-4">{error}</p>}
 
-        {/* Actions */}
         <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
           <button
             onClick={onReturn}
@@ -108,7 +112,6 @@ const StripeCheckoutReview: React.FC<StripeCheckoutReviewProps> = ({
           </motion.button>
         </div>
 
-        {/* Footer */}
         <p className="text-xs text-gray-500 mt-6">
           Payments are securely processed via Stripe.
         </p>

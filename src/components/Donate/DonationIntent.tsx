@@ -26,6 +26,8 @@ export type DonationIntentValues = {
   amount: number;
   frequency: Frequency;
   reference: string;
+  isCustom: boolean; // ✅ add this
+
 };
 
 interface Props {
@@ -54,7 +56,7 @@ const DonationIntent: React.FC<Props> = ({ onContinue }) => {
 
     setError("");
 
-    onContinue({ amount, frequency, reference });
+    onContinue({ amount, frequency, reference, isCustom });
   };
 
   return (
