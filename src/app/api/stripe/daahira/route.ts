@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
       }),
     };
 
-    // 🟡 Handle One-time donation
+    // One-Time Donation
     if (frequency === "one-time") {
       const session = await stripe.checkout.sessions.create({
         mode: "payment",
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ sessionId: session.id, url: session.url });
     }
 
-    // 🔁 Handle Recurring (subscription) donations with predefined amounts only
+    // Recurring Donation (Suggested Amounts Only)
     const priceMap: Record<string, Record<string, string>> = {
       "10": {
         weekly: process.env.PRICE_10_WEEKLY!,
@@ -129,7 +129,12 @@ export async function POST(req: NextRequest) {
       mode: "subscription",
       payment_method_types: ["card"],
       customer_email: donorEmail,
-      subscription_data: { metadata },
+      subscription_data: {
+        metadata,
+      },
+      payment_intent_data: {
+        metadata, // ✅ ensures it's attached to the actual charge
+      },
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/donate?canceled=true`,
@@ -138,14 +143,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ sessionId: session.id, url: session.url });
   } catch (error: any) {
     console.error("❌ Stripe Checkout Error:", error.message || error);
-    return NextResponse.json(
-      { error: "Stripe session creation failed" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Stripe session creation failed" }, { status: 500 });
   }
 }
 
-// ✅ GET: Retrieve donation metadata from Stripe
+// ✅ GET: Retrieve metadata for receipt/success page
 export async function GET(req: NextRequest) {
   const sessionId = req.nextUrl.searchParams.get("session_id");
   if (!sessionId) {
@@ -163,8 +165,7 @@ export async function GET(req: NextRequest) {
 
     const paymentIntent = session.payment_intent as Stripe.PaymentIntent | null;
     const subscription = session.subscription as Stripe.Subscription | null;
-    const invoiceIntent = (subscription?.latest_invoice as any)
-      ?.payment_intent as Stripe.PaymentIntent | null;
+    const invoiceIntent = (subscription?.latest_invoice as any)?.payment_intent as Stripe.PaymentIntent | null;
 
     const metadata = {
       ...subscription?.metadata,
