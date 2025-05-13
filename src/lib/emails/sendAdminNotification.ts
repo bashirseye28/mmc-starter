@@ -1,9 +1,8 @@
-// src/lib/emails/sendAdminNotification.ts
 import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY!);
 
-interface AdminNotificationProps {
+export interface AdminNotificationProps {
   name: string;
   email: string;
   amount: string;
@@ -24,11 +23,11 @@ export async function sendAdminNotification({
 }: AdminNotificationProps) {
   try {
     await resend.emails.send({
-      from: "MMC Donations <info@manchestermuridcommunity.org>",
-      to: ["admin@manchestermuridcommunity.org"], // 🔁 Replace or add multiple if needed
-      subject: `✅ New MMC Donation Received - £${amount}`,
+      from: "MMC Donations <notify@manchestermuridcommunity.org>",
+      to: "info@manchestermuridcommunity.org", // ✅ Replace with actual admin address(es)
+      subject: `📥 New Donation Received – ${name}`,
       text: `
-A new donation has been successfully received.
+A new donation has been received.
 
 Donor Name: ${name}
 Donor Email: ${email}
@@ -38,12 +37,11 @@ Frequency: ${frequency}
 Date: ${date}
 Receipt ID: ${receiptId}
 
-— MMC Stripe Webhook
+– MMC Web System
       `.trim(),
     });
-
-    console.log(`📨 Admin notified about donation from ${name}`);
-  } catch (error) {
-    console.error("❌ Failed to send admin notification email:", error);
+    console.log("📧 Admin notification sent");
+  } catch (err) {
+    console.error("❌ Failed to send admin email:", err);
   }
 }

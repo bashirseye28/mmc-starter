@@ -1,15 +1,14 @@
 // src/app/api/webhooks/stripe/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { buffer } from "micro"; // Ensure micro is installed (npm i micro)
+import { buffer } from "micro";
 import { sendDonationReceipt } from "@/lib/emails/sendDonationReceipt";
 import { sendAdminNotification } from "@/lib/emails/sendAdminNotification";
 
-// ⛔ Must use Node.js runtime to support raw body
+// ⛔ Ensure it's not using edge runtime
 export const runtime = "nodejs";
 
-// 🔒 Disable body parsing to use raw buffer
+// Disable default body parsing
 export const config = {
   api: {
     bodyParser: false,
@@ -39,13 +38,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Webhook verification failed" }, { status: 400 });
   }
 
-  // ✅ Handle successful one-time or subscription payment
+  // ✅ Handle payment_intent.succeeded (one-time) and invoice.paid (recurring)
   switch (event.type) {
     case "payment_intent.succeeded": {
       const pi = event.data.object as Stripe.PaymentIntent;
       const meta = pi.metadata;
-
-      console.log("✅ PaymentIntent succeeded:", pi.id);
 
       if (meta?.donor_email) {
         await Promise.all([
@@ -62,30 +59,51 @@ export async function POST(req: NextRequest) {
             email: meta.donor_email,
             amount: meta.donation_amount,
             reference: meta.donation_reference,
-            frequency: meta.donation_frequency || "One-time",
+            frequency: meta.donation_frequency,
             date: meta.donation_date,
             receiptId: meta.receipt_id,
           }),
         ]);
       }
-
-      break;
-    }
-
-    case "checkout.session.completed": {
-      const session = event.data.object as Stripe.Checkout.Session;
-      console.log("✅ Checkout Session completed:", session.id);
       break;
     }
 
     case "invoice.paid": {
       const invoice = event.data.object as Stripe.Invoice;
-      console.log("✅ Subscription invoice paid:", invoice.id);
+      const meta = invoice.metadata;
+
+      if (meta?.donor_email) {
+        await Promise.all([
+          sendDonationReceipt({
+            to: meta.donor_email,
+            name: meta.donor_name || "Donor",
+            amount: meta.donation_amount,
+            reference: meta.donation_reference,
+            date: meta.donation_date,
+            receiptId: meta.receipt_id,
+          }),
+          sendAdminNotification({
+            name: meta.donor_name || "Donor",
+            email: meta.donor_email,
+            amount: meta.donation_amount,
+            reference: meta.donation_reference,
+            frequency: meta.donation_frequency,
+            date: meta.donation_date,
+            receiptId: meta.receipt_id,
+          }),
+        ]);
+      }
+      break;
+    }
+
+    case "checkout.session.completed": {
+      const session = event.data.object as Stripe.Checkout.Session;
+      console.log("✅ Checkout session completed:", session.id);
       break;
     }
 
     default:
-      console.log(`ℹ️ Unhandled event type: ${event.type}`);
+      console.log(`🔔 Unhandled event type: ${event.type}`);
   }
 
   return NextResponse.json({ received: true });
