@@ -1,48 +1,44 @@
+// src/lib/emails/sendAdminNotification.ts
 import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY!);
-
-interface AdminNotificationProps {
-  name: string;
-  email: string;
-  amount: string;
-  reference: string;
-  date: string;
-  receiptId: string;
-  frequency: string;
-}
 
 export async function sendAdminNotification({
   name,
   email,
   amount,
   reference,
+  frequency,
   date,
   receiptId,
-  frequency,
-}: AdminNotificationProps) {
+}: {
+  name: string;
+  email: string;
+  amount: string;
+  reference: string;
+  frequency: string;
+  date: string;
+  receiptId: string;
+}) {
   try {
     await resend.emails.send({
-      from: "MMC Donations <notify@manchestermuridcommunity.org>",
-      to: "info@manchestermuridcommunity.org", // Change if needed
-      subject: "✅ New MMC Donation Received",
+      from: "MMC System <donate@manchestermuridcommunity.org>",
+      to: "info@manchestermuridcommunity.org",
+      subject: "✅ New Donation Received",
       text: `
-A new donation has been received.
+New donation received:
 
-Donor Name: ${name}
-Donor Email: ${email}
-Amount: £${amount}
+Name: ${name}
+Email: ${email}
+Reference: ${reference}
 Frequency: ${frequency}
-Tier: ${reference}
+Amount: £${amount}
 Date: ${date}
 Receipt ID: ${receiptId}
-
-Please log in to the dashboard for full details.
       `.trim(),
     });
-
-    console.log(`📨 Admin notified for donation by ${name}`);
-  } catch (error) {
-    console.error("❌ Failed to notify admin:", error);
+    console.log(`📧 Admin notified about ${email}`);
+  } catch (err) {
+    console.error("❌ Failed to send admin notification:", err);
   }
 }
