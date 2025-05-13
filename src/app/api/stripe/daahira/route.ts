@@ -5,26 +5,17 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-02-24.acacia",
 });
 
-// 🧼 Sanitize donation reference
+// ✅ Improved Reference Sanitizer
 const sanitizeReference = (
   ref: string | null | undefined,
   isCustom: boolean
 ): string => {
-  if (!ref || typeof ref !== "string") return "General Donation";
-  const cleaned = ref.trim().replace(/[.,;!?]+$/, "");
+  const cleaned = typeof ref === "string" ? ref.trim().replace(/[.,;!?]+$/, "") : "";
 
-  const allowedReferences = [
-    "Help sponsor a Madrassah student’s learning materials.",
-    "Weekly Iftaar Contribution.",
-    "Adiyyah Tuuba – Sacred Offering.",
-    "Provide meals for those in need.",
-    "Support the KST Centre Project.",
-    "Large donor contributions towards major projects.",
-  ];
+  if (isCustom && cleaned.length >= 3) return cleaned;
+  if (!isCustom && cleaned.length >= 3) return cleaned;
 
-  return isCustom
-    ? cleaned.length >= 3 ? cleaned : "General Donation"
-    : allowedReferences.includes(cleaned) ? cleaned : "General Donation";
+  return "General Donation";
 };
 
 export async function POST(req: NextRequest) {
@@ -38,8 +29,8 @@ export async function POST(req: NextRequest) {
     const donorName = name?.trim() || "Anonymous Donor";
     const donorEmail = /^\S+@\S+\.\S+$/.test(email) ? email.trim() : "anonymous@donation.com";
     const donationReference = sanitizeReference(reference, isCustom);
-    const receiptId = `DON-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://manchestermuridcommunity.org";
+    const receiptId = `DON-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 
     const metadata = {
       receipt_id: receiptId,
@@ -53,7 +44,7 @@ export async function POST(req: NextRequest) {
       }),
     };
 
-    // ✅ One-time donation logic
+    // ✅ One-Time Donations
     if (frequency === "one-time") {
       const session = await stripe.checkout.sessions.create({
         mode: "payment",
@@ -80,9 +71,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ sessionId: session.id, url: session.url });
     }
 
-    // ✅ Recurring donation logic (only predefined amounts)
+    // ✅ Recurring (Subscription) Donations
     const allowedTiers = ["10", "15", "25", "50", "100", "250"];
-    if (!allowedTiers.includes(String(amount))) {
+    const isPredefined = allowedTiers.includes(String(amount));
+
+    if (!isPredefined) {
       return NextResponse.json({
         error: "Recurring donations are only available for suggested amounts.",
       }, { status: 400 });
@@ -123,14 +116,19 @@ export async function POST(req: NextRequest) {
 
     const priceId = priceMap[String(amount)]?.[frequency];
     if (!priceId) {
-      return NextResponse.json({ error: "Invalid frequency or tier." }, { status: 400 });
+      return NextResponse.json({ error: "Invalid donation frequency or amount." }, { status: 400 });
     }
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       payment_method_types: ["card"],
       customer_email: donorEmail,
-      subscription_data: { metadata },
+      subscription_data: {
+        metadata,
+      },
+      payment_intent_data: {
+        metadata,
+      },
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/donate?canceled=true`,
@@ -143,6 +141,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
+// ✅ GET: Retrieve metadata for receipt/success page
 export async function GET(req: NextRequest) {
   const sessionId = req.nextUrl.searchParams.get("session_id");
   if (!sessionId) {
