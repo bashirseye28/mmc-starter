@@ -2,14 +2,14 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY!);
 
-export interface AdminNotificationProps {
+interface AdminNotificationProps {
   name: string;
   email: string;
   amount: string;
   reference: string;
-  frequency: string;
   date: string;
   receiptId: string;
+  frequency: string;
 }
 
 export async function sendAdminNotification({
@@ -17,31 +17,32 @@ export async function sendAdminNotification({
   email,
   amount,
   reference,
-  frequency,
   date,
   receiptId,
+  frequency,
 }: AdminNotificationProps) {
   try {
     await resend.emails.send({
       from: "MMC Donations <notify@manchestermuridcommunity.org>",
-      to: "info@manchestermuridcommunity.org", // ✅ Replace with actual admin address(es)
-      subject: `📥 New Donation Received – ${name}`,
+      to: "info@manchestermuridcommunity.org", // Change if needed
+      subject: "✅ New MMC Donation Received",
       text: `
 A new donation has been received.
 
 Donor Name: ${name}
 Donor Email: ${email}
 Amount: £${amount}
-Reference: ${reference}
 Frequency: ${frequency}
+Tier: ${reference}
 Date: ${date}
 Receipt ID: ${receiptId}
 
-– MMC Web System
+Please log in to the dashboard for full details.
       `.trim(),
     });
-    console.log("📧 Admin notification sent");
-  } catch (err) {
-    console.error("❌ Failed to send admin email:", err);
+
+    console.log(`📨 Admin notified for donation by ${name}`);
+  } catch (error) {
+    console.error("❌ Failed to notify admin:", error);
   }
 }
