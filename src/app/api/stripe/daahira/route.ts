@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
+// ✅ Stripe instance
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-02-24.acacia",
 });
 
-// 🧼 Sanitize donation reference
+// ✅ Sanitize and validate reference
 const sanitizeReference = (
   ref: string | null | undefined,
   isCustom: boolean
@@ -31,6 +32,7 @@ export async function POST(req: NextRequest) {
   try {
     const { name, email, amount, frequency, reference, isCustom } = await req.json();
 
+    // ✅ Validate essential fields
     if (!amount || !frequency || !email) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
@@ -38,9 +40,10 @@ export async function POST(req: NextRequest) {
     const donorName = name?.trim() || "Anonymous Donor";
     const donorEmail = /^\S+@\S+\.\S+$/.test(email) ? email.trim() : "anonymous@donation.com";
     const donationReference = sanitizeReference(reference, isCustom);
-    const receiptId = `DON-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://manchestermuridcommunity.org";
+    const receiptId = `DON-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 
+    // ✅ Shared metadata for Stripe
     const metadata = {
       receipt_id: receiptId,
       donor_name: donorName,
@@ -53,7 +56,7 @@ export async function POST(req: NextRequest) {
       }),
     };
 
-    // ✅ One-time donation logic
+    // ✅ One-Time Donation Flow
     if (frequency === "one-time") {
       const session = await stripe.checkout.sessions.create({
         mode: "payment",
@@ -74,13 +77,13 @@ export async function POST(req: NextRequest) {
           },
         ],
         success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${baseUrl}/donate?canceled=true`,
+        cancel_url: `${baseUrl}/donate/cancel`,
       });
 
       return NextResponse.json({ sessionId: session.id, url: session.url });
     }
 
-    // ✅ Recurring donation logic (only predefined amounts)
+    // ✅ Recurring Donation (only allowed tiers)
     const allowedTiers = ["10", "15", "25", "50", "100", "250"];
     if (!allowedTiers.includes(String(amount))) {
       return NextResponse.json({
@@ -126,15 +129,37 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid frequency or tier." }, { status: 400 });
     }
 
+    // ✅ Create Stripe Subscription Session
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       payment_method_types: ["card"],
       customer_email: donorEmail,
-      subscription_data: { metadata },
+      subscription_data: {
+        metadata,
+      },
+      invoice_creation: {
+        enabled: true, // required to get invoice before payment intent
+      },
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/donate?canceled=true`,
+      cancel_url: `${baseUrl}/donate/cancel`,
     });
+
+    // ✅ Attach metadata to invoice.payment_intent manually
+    const subscriptionId = session.subscription as string;
+
+    if (subscriptionId) {
+      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+      const invoiceId = subscription.latest_invoice as string;
+
+      // Attach metadata to invoice's payment intent
+      const invoice = await stripe.invoices.retrieve(invoiceId);
+      const paymentIntentId = invoice.payment_intent as string;
+
+      if (paymentIntentId) {
+        await stripe.paymentIntents.update(paymentIntentId, { metadata });
+      }
+    }
 
     return NextResponse.json({ sessionId: session.id, url: session.url });
   } catch (error: any) {
@@ -143,8 +168,10 @@ export async function POST(req: NextRequest) {
   }
 }
 
+// ✅ GET route for success receipt
 export async function GET(req: NextRequest) {
   const sessionId = req.nextUrl.searchParams.get("session_id");
+
   if (!sessionId) {
     return NextResponse.json({ error: "Missing session_id" }, { status: 400 });
   }
@@ -162,6 +189,7 @@ export async function GET(req: NextRequest) {
     const subscription = session.subscription as Stripe.Subscription | null;
     const invoiceIntent = (subscription?.latest_invoice as any)?.payment_intent as Stripe.PaymentIntent | null;
 
+    // ✅ Merge all potential metadata
     const metadata = {
       ...subscription?.metadata,
       ...invoiceIntent?.metadata,
