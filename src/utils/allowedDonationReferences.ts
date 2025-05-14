@@ -1,4 +1,4 @@
-export const allowedDonationReferences: string[] = [
+export const allowedDonationReferences = [
   "Help sponsor a Madrassah student’s learning materials.",
   "Weekly Iftaar Contribution.",
   "Adiyyah Tuuba – Sacred Offering.",

@@ -5,29 +5,38 @@ import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMosque, faBookOpen, faUtensils } from "@fortawesome/free-solid-svg-icons";
 
-const impactAreas = [
+type ImpactArea = {
+  icon: any;
+  title: string;
+  description: string; // HTML allowed
+};
+
+const defaultImpactAreas: ImpactArea[] = [
   {
     icon: faMosque,
     title: "Keur Serigne Touba (KST) Centre Project",
-    description: "Supporting the development of a dedicated space for worship, education, and community programs.",
+    description: "Supporting the development of a dedicated space for <strong>worship</strong>, <strong>education</strong>, and community programs.",
   },
   {
     icon: faBookOpen,
     title: "Education & Madrassah",
-    description: "Helping students receive Qur'anic education, Arabic studies, and Murid teachings.",
+    description: "Helping students receive <strong>Qur'anic education</strong>, Arabic studies, and Murid teachings.",
   },
   {
     icon: faUtensils,
     title: "Charity & Welfare Programs",
-    description: "Providing meals and essential support to those in need through our social welfare initiatives.",
+    description: "Providing meals and essential support to those in need through our <strong>social welfare initiatives</strong>.",
   },
 ];
 
-const WhyDonate = () => {
+const WhyDonate = ({ impactAreas = defaultImpactAreas }: { impactAreas?: ImpactArea[] }) => {
   return (
-    <section id="why-donate" className="py-20 bg-white">
+    <section
+      id="why-donate"
+      className="py-20 bg-white"
+      aria-label="Reasons to support Manchester Murid Community"
+    >
       <div className="container mx-auto px-6 max-w-6xl text-center">
-        
         {/* Section Heading */}
         <motion.header
           className="mb-12"
@@ -54,13 +63,20 @@ const WhyDonate = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.8, delay: index * 0.2 }}
             >
-              <FontAwesomeIcon
-                icon={area.icon}
+              <motion.div
+                whileHover={{ scale: 1.1 }}
+                transition={{ type: "spring", stiffness: 300 }}
                 className="text-gold text-4xl mb-4"
-                aria-hidden="true"
-              />
+              >
+                <FontAwesomeIcon icon={area.icon} aria-hidden="true" />
+              </motion.div>
+
               <h3 className="text-xl font-semibold text-primary mb-2">{area.title}</h3>
-              <p className="text-gray-700 text-sm">{area.description}</p>
+
+              <p
+                className="text-gray-700 text-sm"
+                dangerouslySetInnerHTML={{ __html: area.description }}
+              />
             </motion.article>
           ))}
         </div>
