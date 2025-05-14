@@ -1,8 +1,8 @@
-// /src/app/api/webhooks/stripe/route.ts
-import { NextResponse } from 'next/server';
-import { buffer } from 'micro';
+import { NextRequest } from 'next/server';
 import Stripe from 'stripe';
-import { db } from '@/lib/firebaseAdmin';
+import { buffer } from 'micro';
+import { db } from '@/lib/firebaseAdmin'; // adjust path as needed
+import { Timestamp } from 'firebase-admin/firestore';
 
 export const config = {
   api: {
@@ -11,38 +11,36 @@ export const config = {
 };
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-02-24.acacia',
+  apiVersion: '2023-10-16',
 });
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
-export async function POST(req: Request) {
-  const rawBody = await req.arrayBuffer();
-  const body = Buffer.from(rawBody);
-  const sig = req.headers.get('stripe-signature')!;
+export async function POST(req: NextRequest) {
+  const rawBody = await req.text();
+  const sig = req.headers.get('stripe-signature') as string;
 
   let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(body, sig, endpointSecret);
+    event = stripe.webhooks.constructEvent(rawBody, sig, endpointSecret);
   } catch (err: any) {
     console.error('❌ Webhook signature verification failed.', err.message);
-    return NextResponse.json({ error: err.message }, { status: 400 });
+    return new Response(`Webhook Error: ${err.message}`, { status: 400 });
   }
 
-  // ✅ Only handle successful donations
+  // ✅ Handle checkout session complete
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
 
-    // Example: Save donation to Firestore
     try {
       await db.collection('donations').add({
         sessionId: session.id,
         amount_total: session.amount_total,
         currency: session.currency,
         customer_email: session.customer_email,
-        created: Stripe.Timestamp.now,
         status: session.status,
+        created: Timestamp.now(),
       });
 
       console.log('✅ Donation saved to Firestore');
@@ -51,5 +49,5 @@ export async function POST(req: Request) {
     }
   }
 
-  return NextResponse.json({ received: true });
+  return new Response('Webhook received', { status: 200 });
 }
