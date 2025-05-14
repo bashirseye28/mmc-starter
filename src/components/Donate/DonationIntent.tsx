@@ -86,54 +86,63 @@ const DonationIntent: React.FC<Props> = ({ onContinue }) => {
         </h2>
 
         {/* Suggested Tiers */}
-        <div
-          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 mb-12"
-          role="radiogroup"
-          aria-label="Donation tiers"
-        >
-          {donationTiers.map((tier, index) => (
-            <motion.button
-              key={tier.amount}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4, delay: index * 0.1 }}
-              type="button"
-              onClick={() => {
-                setSelectedAmount(tier.amount);
-                setCustomAmount("");
-                setCustomReference("");
-                setFrequency(null);
-              }}
-              className={clsx(
-                "bg-white shadow-lg rounded-lg p-6 flex flex-col items-center text-center transition relative cursor-pointer border-2",
-                selectedAmount === tier.amount
-                  ? "border-gold bg-gold/10"
-                  : "border-transparent hover:border-gold hover:shadow-md"
-              )}
-            >
-              <p className="text-xl font-bold text-primary">£{tier.amount}</p>
-              <p className="text-sm text-gold mb-3 capitalize">{tier.defaultFrequency}</p>
-              <p className="text-sm text-gray-600">{tier.description}</p>
+        {selectedAmount === null && (
+          <div
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 mb-12"
+            role="radiogroup"
+            aria-label="Donation tiers"
+          >
+            {donationTiers.map((tier, index) => (
+              <motion.button
+                key={tier.amount}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, delay: index * 0.1 }}
+                type="button"
+                onClick={() => {
+                  setSelectedAmount(tier.amount);
+                  setCustomAmount("");
+                  setCustomReference("");
+                  setFrequency(null);
+                }}
+                className={clsx(
+                  "bg-white shadow-lg rounded-lg p-6 flex flex-col items-center text-center transition relative cursor-pointer border-2",
+                  selectedAmount === tier.amount
+                    ? "border-gold bg-gold/10"
+                    : "border-transparent hover:border-gold hover:shadow-md"
+                )}
+              >
+                <p className="text-xl font-bold text-primary">£{tier.amount}</p>
+                <p className="text-sm text-gold mb-3 capitalize">
+                  {tier.defaultFrequency}
+                </p>
+                <p className="text-sm text-gray-600">{tier.description}</p>
 
-              {selectedAmount === tier.amount && (
-                <FontAwesomeIcon
-                  icon={faCheck}
-                  className="absolute top-4 right-4 text-primary text-sm"
-                />
-              )}
-            </motion.button>
-          ))}
-        </div>
+                {selectedAmount === tier.amount && (
+                  <FontAwesomeIcon
+                    icon={faCheck}
+                    className="absolute top-4 right-4 text-primary text-sm"
+                  />
+                )}
+              </motion.button>
+            ))}
+          </div>
+        )}
 
-        {/* Custom Amount */}
+        {/* Custom Amount Input */}
         <div className="mb-6 max-w-xs mx-auto">
-          <label htmlFor="customAmount" className="block font-semibold text-primary mb-2">
+          <label
+            htmlFor="customAmount"
+            className="block font-semibold text-primary mb-2"
+          >
             Or enter a custom amount
           </label>
           <div className="relative">
-            <span className="absolute left-3 top-2.5 font-bold text-primary">£</span>
+            <span className="absolute left-3 top-2.5 font-bold text-primary">
+              £
+            </span>
             <input
               id="customAmount"
               type="number"
@@ -152,12 +161,17 @@ const DonationIntent: React.FC<Props> = ({ onContinue }) => {
           </div>
         </div>
 
-        {/* Custom Reference */}
+        {/* Custom Reference Field */}
         {isCustom && (
           <div className="mb-6 max-w-xs mx-auto">
-            <label htmlFor="customReference" className="block text-sm font-semibold text-primary mb-2">
+            <label
+              htmlFor="customReference"
+              className="block text-sm font-semibold text-primary mb-2"
+            >
               What would you like your donation to support?
-              <span className="text-gray-500 block text-xs">(e.g. Zakat, KST, Daahira)</span>
+              <span className="text-gray-500 block text-xs">
+                (e.g. Zakat, KST, Daahira)
+              </span>
             </label>
             <input
               id="customReference"
@@ -170,10 +184,12 @@ const DonationIntent: React.FC<Props> = ({ onContinue }) => {
           </div>
         )}
 
-        {/* Frequency Selection */}
+        {/* Frequency Selector */}
         {amount > 0 && (!isCustom || getReference().length >= 3) && (
           <div className="mb-8">
-            <h3 className="text-lg font-semibold text-primary mb-4">Select Frequency</h3>
+            <h3 className="text-lg font-semibold text-primary mb-4">
+              Select Frequency
+            </h3>
             <div className="flex justify-center gap-4 flex-wrap">
               {frequencies.map((f) => (
                 <button
@@ -203,6 +219,23 @@ const DonationIntent: React.FC<Props> = ({ onContinue }) => {
                 Recurring donations are only available for suggested tiers.
               </p>
             )}
+          </div>
+        )}
+
+        {/* Return Button */}
+        {selectedAmount !== null && (
+          <div className="mt-6 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedAmount(null);
+                setFrequency(null);
+                setError("");
+              }}
+              className="text-sm underline text-primary hover:text-darkPrimary transition"
+            >
+              ← Change Donation Tier
+            </button>
           </div>
         )}
 

@@ -143,9 +143,9 @@ const SuccessReceipt: React.FC<SuccessReceiptProps> = ({
 
           <div className="mt-3 space-y-2 text-left font-body text-darkText">
             <p><strong>Receipt ID:</strong> {receiptId}</p>
-            <p><strong>Donor:</strong> {donorName}</p>
+            <p><strong>Name:</strong> {donorName}</p>
             <p><strong>Email:</strong> {donorEmail}</p>
-            <p><strong>Donation Tier:</strong> {reference}</p>
+            <p><strong>Reference:</strong> {reference}</p>
             <p><strong>Amount:</strong> £{amount.toFixed(2)}</p>
             <p><strong>Frequency:</strong> {frequency}</p>
             <p><strong>Payment Method:</strong> {method}</p>

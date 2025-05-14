@@ -35,16 +35,16 @@ export async function POST(req: NextRequest) {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
     const metadata = {
-      donation_id: donationId,
+      receipt_id: donationId,
       donor_name: anonymous ? "Anonymous" : name || "Anonymous",
       donor_email: email,
-      amount: amount.toString(), // ✅ Include donation amount
-      frequency,
-      reference,
-      message: message || "",
+      donation_amount: amount.toString(),
+      donation_frequency: frequency,
+      donation_reference: reference,
       donation_date: new Date().toLocaleString("en-GB", {
         timeZone: "Europe/London",
       }),
+      message: message || "",
     };
 
     const isRecurring = frequency !== "one-time";
@@ -52,6 +52,7 @@ export async function POST(req: NextRequest) {
     const isValidFrequency =
       frequency === "one-time" || frequency === "weekly" || frequency === "monthly";
 
+    // ✅ Suggested Tier Flow
     if (!isCustom && isKnownAmount && isValidFrequency) {
       const priceId = priceMap[amount as keyof typeof priceMap][
         frequency as Frequency
@@ -74,16 +75,16 @@ export async function POST(req: NextRequest) {
             quantity: 1,
           },
         ],
-        subscription_data: isRecurring ? { metadata } : undefined,
+        subscription_data: isRecurring ? { metadata } : undefined, // ✅ Ensure correct wrapping
         payment_intent_data: !isRecurring ? { metadata } : undefined,
-        success_url: `${baseUrl}/donate/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${baseUrl}/donate/cancel`,
+        success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${baseUrl}/donate/canceled?canceled=true`,
       });
 
       return NextResponse.json({ url: session.url });
     }
 
-    // Fallback for custom amount
+    // ✅ Custom Donation Flow
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
@@ -104,8 +105,8 @@ export async function POST(req: NextRequest) {
       payment_intent_data: {
         metadata,
       },
-      success_url: `${baseUrl}/donate/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/donate/cancel`,
+      success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/donate/canceled?canceled=true`,
     });
 
     return NextResponse.json({ url: session.url });
@@ -115,5 +116,60 @@ export async function POST(req: NextRequest) {
       { error: "An error occurred while creating the checkout session." },
       { status: 500 }
     );
+  }
+}
+
+export async function GET(req: NextRequest) {
+  const sessionId = req.nextUrl.searchParams.get("session_id");
+
+  if (!sessionId) {
+    return NextResponse.json({ error: "Missing session_id" }, { status: 400 });
+  }
+
+  try {
+    const session = await stripe.checkout.sessions.retrieve(sessionId, {
+      expand: [
+        "payment_intent",
+        "subscription",
+        "subscription.latest_invoice.payment_intent",
+      ],
+    });
+
+    const paymentIntent = session.payment_intent as Stripe.PaymentIntent | null;
+    const subscription = session.subscription as Stripe.Subscription | null;
+    const invoiceIntent = (subscription?.latest_invoice as any)?.payment_intent as
+      | Stripe.PaymentIntent
+      | null;
+
+    const metadata = {
+      ...session.metadata, // just in case
+      ...subscription?.metadata,
+      ...invoiceIntent?.metadata,
+      ...paymentIntent?.metadata,
+    };
+
+    const amount_total =
+      session.amount_total ||
+      paymentIntent?.amount ||
+      invoiceIntent?.amount ||
+      (subscription?.items.data[0]?.price.unit_amount ?? 0) *
+        (subscription?.items.data[0]?.quantity ?? 1);
+
+    return NextResponse.json({
+      amount_total,
+      receipt_id: metadata.receipt_id,
+      donor_name: metadata.donor_name,
+      donor_email: metadata.donor_email,
+      donation_reference:
+        metadata.donation_reference || metadata.reference || "(No reference provided)",
+      donation_amount: metadata.donation_amount,
+      donation_frequency: metadata.donation_frequency,
+      donation_date: metadata.donation_date,
+      payment_method_types: session.payment_method_types,
+      message: metadata.message,
+    });
+  } catch (err: any) {
+    console.error("❌ Failed to retrieve session:", err.message || err);
+    return NextResponse.json({ error: "Session not found" }, { status: 404 });
   }
 }
