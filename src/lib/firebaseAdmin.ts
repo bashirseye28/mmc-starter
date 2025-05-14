@@ -8,7 +8,7 @@ const rawKey = process.env.FIREBASE_PRIVATE_KEY;
 const formattedKey = rawKey
   ?.replace(/\\r\\n/g, '\n')   // handles escaped \r\n
   .replace(/\\n/g, '\n')       // handles escaped \n
-  .replace(/\r/g, '');         // removes any raw \r left after parsing
+  .replace(/\r/g, '');         // ✅ strips leftover raw carriage returns
 
 console.log("✅ RAW KEY:", JSON.stringify(rawKey));
 console.log("✅ FORMATTED KEY:", JSON.stringify(formattedKey));
