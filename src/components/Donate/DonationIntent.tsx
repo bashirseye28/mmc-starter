@@ -45,11 +45,15 @@ const DonationIntent: React.FC<Props> = ({ onContinue }) => {
   const sanitizeReference = (ref: string) =>
     ref.trim().replace(/[^a-zA-Z0-9 -]/g, "").substring(0, 64);
 
-  const reference = isCustom
-    ? customReference.trim()
-    : donationTiers.find((tier) => tier.amount === selectedAmount)?.reference || "General Donation";
+  const getReference = (): string => {
+    if (isCustom) return sanitizeReference(customReference.trim());
+    const tier = donationTiers.find((t) => t.amount === selectedAmount);
+    return tier?.reference ?? "";
+  };
 
   const handleContinue = () => {
+    const reference = getReference();
+
     if (!amount || amount < 1) {
       setError("Please enter a valid donation amount.");
       return;
@@ -68,7 +72,7 @@ const DonationIntent: React.FC<Props> = ({ onContinue }) => {
     onContinue({
       amount,
       frequency,
-      reference: sanitizeReference(reference),
+      reference,
       isCustom,
     });
   };
@@ -166,8 +170,8 @@ const DonationIntent: React.FC<Props> = ({ onContinue }) => {
           </div>
         )}
 
-        {/* Frequency Selector */}
-        {amount > 0 && (!isCustom || reference.length >= 3) && (
+        {/* Frequency Selection */}
+        {amount > 0 && (!isCustom || getReference().length >= 3) && (
           <div className="mb-8">
             <h3 className="text-lg font-semibold text-primary mb-4">Select Frequency</h3>
             <div className="flex justify-center gap-4 flex-wrap">
@@ -202,21 +206,21 @@ const DonationIntent: React.FC<Props> = ({ onContinue }) => {
           </div>
         )}
 
-        {/* Error */}
+        {/* Error Message */}
         {error && (
           <p className="text-red-600 font-medium mt-6" role="alert">
             {error}
           </p>
         )}
 
-        {/* Submit */}
+        {/* Continue Button */}
         <button
           type="button"
           onClick={handleContinue}
-          disabled={!amount || !frequency || (isCustom && reference.length < 3)}
+          disabled={!amount || !frequency || (isCustom && getReference().length < 3)}
           className={clsx(
             "mt-6 px-8 py-3 rounded-md font-semibold shadow-md transition",
-            amount && frequency && (!isCustom || reference.length >= 3)
+            amount && frequency && (!isCustom || getReference().length >= 3)
               ? "bg-primary text-white hover:bg-darkPrimary"
               : "bg-gray-300 text-white cursor-not-allowed"
           )}

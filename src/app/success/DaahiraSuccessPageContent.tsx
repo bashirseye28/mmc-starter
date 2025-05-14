@@ -30,14 +30,14 @@ export default function DaahiraSuccessPageContent() {
           : parseFloat(data.donation_amount || "0");
 
         const formatted: SuccessReceiptProps = {
-          receiptId: data.receipt_id || sessionId.slice(0, 10).toUpperCase(),
-          donorName: data.donor_name || "Anonymous Donor",
-          donorEmail: data.donor_email || "Not Provided",
-          reference: data.donation_reference || "General Donation",
+          receiptId: data.receipt_id || `DON-${sessionId.slice(0, 8).toUpperCase()}`,
+          donorName: data.donor_name?.trim() || "Anonymous Donor",
+          donorEmail: data.donor_email?.trim() || "Not Provided",
+          reference: data.donation_reference?.trim() || "(No reference provided)",
           amount: parseFloat(amount.toFixed(2)),
           frequency: data.donation_frequency || "One-Time",
           method: Array.isArray(data.payment_method_types)
-            ? data.payment_method_types[0]?.toUpperCase() || "CARD"
+            ? (data.payment_method_types[0]?.toUpperCase() || "CARD")
             : "CARD",
           date:
             data.donation_date ||
