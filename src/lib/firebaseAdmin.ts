@@ -4,14 +4,14 @@ import { getFirestore } from "firebase-admin/firestore";
 
 // ✅ Normalize private key — strip \r and convert \n correctly
 const rawKey = process.env.FIREBASE_PRIVATE_KEY;
-const formattedKey = rawKey
-  ?.replace(/\\r/g, '')     // remove carriage returns
-  .replace(/\\n/g, '\n');   // convert escaped newlines to real ones
 
-// ✅ TEMP DEBUG: log to confirm formatting (don't log full key in prod)
+const formattedKey = rawKey
+  ?.replace(/\\r\\n/g, '\n')   // handles escaped \r\n
+  .replace(/\\n/g, '\n')       // handles escaped \n
+  .replace(/\r/g, '');         // removes any raw \r left after parsing
+
 console.log("✅ RAW KEY:", JSON.stringify(rawKey));
 console.log("✅ FORMATTED KEY:", JSON.stringify(formattedKey));
-
 // ✅ Initialize Firebase Admin once
 if (!getApps().length) {
   initializeApp({
