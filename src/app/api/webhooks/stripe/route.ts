@@ -1,75 +1,54 @@
-import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
-import { db } from "@/app/lib/firebaseAdmin"; // ✅ Corrected path to Firestore
+// /src/app/api/webhooks/stripe/route.ts
+import { NextResponse } from 'next/server';
+import { buffer } from 'micro';
+import Stripe from 'stripe';
+import { db } from '@/lib/firebaseAdmin';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: "2025-02-24.acacia",
-});
-
-// Stripe requires raw body for signature verification
 export const config = {
   api: {
     bodyParser: false,
   },
 };
 
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2025-02-24.acacia',
+});
+
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
-// Helper: Convert readable stream to buffer
-async function buffer(readable: ReadableStream<Uint8Array>) {
-  const reader = readable.getReader();
-  const chunks = [];
-  let done: boolean | undefined;
-  while (!done) {
-    const { value, done: doneReading } = await reader.read();
-    if (value) chunks.push(value);
-    done = doneReading;
-  }
-  return Buffer.concat(chunks);
-}
-
-export async function POST(req: NextRequest) {
-  const rawBody = await buffer(req.body!);
-  const sig = req.headers.get("stripe-signature")!;
+export async function POST(req: Request) {
+  const rawBody = await req.arrayBuffer();
+  const body = Buffer.from(rawBody);
+  const sig = req.headers.get('stripe-signature')!;
 
   let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(rawBody, sig, endpointSecret);
+    event = stripe.webhooks.constructEvent(body, sig, endpointSecret);
   } catch (err: any) {
-    console.error("❌ Webhook signature verification failed:", err.message);
-    return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
+    console.error('❌ Webhook signature verification failed.', err.message);
+    return NextResponse.json({ error: err.message }, { status: 400 });
   }
 
-  switch (event.type) {
-    case "checkout.session.completed": {
-      const session = event.data.object as Stripe.Checkout.Session;
-      const metadata = session.metadata || {};
+  // ✅ Only handle successful donations
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object as Stripe.Checkout.Session;
 
-      const donation = {
-        receipt_id: metadata.receipt_id,
-        donor_name: metadata.donor_name || "Anonymous",
-        donor_email: metadata.donor_email || "Not Provided",
-        donation_amount: metadata.donation_amount,
-        donation_frequency: metadata.donation_frequency,
-        donation_reference: metadata.donation_reference || "General",
-        donation_date: metadata.donation_date,
-        message: metadata.message || "",
-        createdAt: new Date().toISOString(),
-      };
+    // Example: Save donation to Firestore
+    try {
+      await db.collection('donations').add({
+        sessionId: session.id,
+        amount_total: session.amount_total,
+        currency: session.currency,
+        customer_email: session.customer_email,
+        created: Stripe.Timestamp.now,
+        status: session.status,
+      });
 
-      try {
-        await db.collection("donations").doc(donation.receipt_id).set(donation);
-        console.log("✅ Donation saved to Firestore:", donation.receipt_id);
-      } catch (err) {
-        console.error("❌ Failed to save donation to Firestore:", err);
-      }
-
-      break;
+      console.log('✅ Donation saved to Firestore');
+    } catch (err) {
+      console.error('❌ Failed to save donation:', err);
     }
-
-    default:
-      console.log(`ℹ️ Unhandled event type: ${event.type}`);
   }
 
   return NextResponse.json({ received: true });
