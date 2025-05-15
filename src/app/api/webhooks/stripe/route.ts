@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server';
 import Stripe from 'stripe';
-import { buffer } from 'micro';
-import { db } from '@/lib/firebaseAdmin'; // adjust path as needed
+import { db } from '@/lib/firebaseAdmin';
 import { Timestamp } from 'firebase-admin/firestore';
 
 export const config = {
@@ -25,21 +24,22 @@ export async function POST(req: NextRequest) {
   try {
     event = stripe.webhooks.constructEvent(rawBody, sig, endpointSecret);
   } catch (err: any) {
-    console.error('❌ Webhook signature verification failed.', err.message);
+    console.error('❌ Webhook signature verification failed:', err.message);
     return new Response(`Webhook Error: ${err.message}`, { status: 400 });
   }
 
-  // ✅ Handle checkout session complete
+  // ✅ Handle completed checkout session
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
 
     try {
       await db.collection('donations').add({
         sessionId: session.id,
-        amount_total: session.amount_total,
-        currency: session.currency,
-        customer_email: session.customer_email,
-        status: session.status,
+        name: session.metadata?.name || 'Anonymous',
+        email: session.metadata?.email || session.customer_email,
+        amount: (session.amount_total || 0) / 100,
+        currency: session.currency?.toUpperCase(),
+        status: session.payment_status,
         created: Timestamp.now(),
       });
 

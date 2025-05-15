@@ -17,9 +17,10 @@ import {
   FaChartLine,
   FaHandsHelping,
   FaEnvelopeOpenText,
+  FaDonate,
 } from "react-icons/fa";
 
-// ✅ Replace with your admin UID from Firebase Auth
+// ✅ Replace with your actual Admin UID
 const ADMIN_UID = "RBLgsx5ef6Uebrl4k1So3i2uQKX2";
 
 interface DashboardStats {
@@ -29,6 +30,7 @@ interface DashboardStats {
   events: number;
   volunteers: number;
   messages: number;
+  donations: number;
 }
 
 const AdminDashboard = () => {
@@ -42,6 +44,7 @@ const AdminDashboard = () => {
     events: 0,
     volunteers: 0,
     messages: 0,
+    donations: 0,
   });
 
   const router = useRouter();
@@ -67,15 +70,23 @@ const AdminDashboard = () => {
 
     const fetchStats = async () => {
       try {
-        const [ordersSnap, productsSnap, booksSnap, eventsSnap, volunteersSnap, messagesSnap] =
-          await Promise.all([
-            getDocs(collection(db, "orders")),
-            getDocs(collection(db, "products")),
-            getDocs(collection(db, "books")),
-            getDocs(collection(db, "events")),
-            getDocs(collection(db, "volunteers")),
-            getDocs(collection(db, "messages")),
-          ]);
+        const [
+          ordersSnap,
+          productsSnap,
+          booksSnap,
+          eventsSnap,
+          volunteersSnap,
+          messagesSnap,
+          donationsSnap,
+        ] = await Promise.all([
+          getDocs(collection(db, "orders")),
+          getDocs(collection(db, "products")),
+          getDocs(collection(db, "books")),
+          getDocs(collection(db, "events")),
+          getDocs(collection(db, "volunteers")),
+          getDocs(collection(db, "messages")),
+          getDocs(collection(db, "donations")), // ✅ NEW
+        ]);
 
         setStats({
           orders: ordersSnap.size,
@@ -84,6 +95,7 @@ const AdminDashboard = () => {
           events: eventsSnap.size,
           volunteers: volunteersSnap.size,
           messages: messagesSnap.size,
+          donations: donationsSnap.size, // ✅ NEW
         });
       } catch (error) {
         console.error("Failed to load dashboard stats:", error);
@@ -138,6 +150,7 @@ const AdminDashboard = () => {
           <SidebarLink href="/admin/orders" icon={<FaShoppingCart />} label="Orders" isOpen={isSidebarOpen} />
           <SidebarLink href="/admin/volunteers" icon={<FaHandsHelping />} label="Volunteers" isOpen={isSidebarOpen} />
           <SidebarLink href="/admin/messages" icon={<FaEnvelopeOpenText />} label="Messages" isOpen={isSidebarOpen} />
+          <SidebarLink href="/admin/donations" icon={<FaDonate />} label="Donations" isOpen={isSidebarOpen} />
 
           <button
             onClick={handleLogout}
@@ -173,6 +186,7 @@ const AdminDashboard = () => {
           <StatCard icon={<FaCalendarAlt />} label="Events" value={stats.events} color="bg-blue-600" />
           <StatCard icon={<FaHandsHelping />} label="Volunteers" value={stats.volunteers} color="bg-purple-600" />
           <StatCard icon={<FaEnvelopeOpenText />} label="Messages" value={stats.messages} color="bg-red-600" />
+          <StatCard icon={<FaDonate />} label="Donations" value={stats.donations} color="bg-teal-600" />
         </div>
       </main>
     </div>

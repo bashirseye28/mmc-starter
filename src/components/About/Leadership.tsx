@@ -35,7 +35,7 @@ const teamMembers = [
     image: "/images/me.png",
   },
   {
-    name: "Bashir Seye",
+    name: "Anonymous",
     role: "General Secretary",
     responsibilities: [
       "Manages records and communications",
