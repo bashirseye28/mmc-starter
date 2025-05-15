@@ -10,7 +10,12 @@ import {
   deleteDoc,
   doc,
 } from "firebase/firestore";
-import { FaChartBar } from "react-icons/fa";
+import Link from "next/link";
+import {
+  FaChartBar,
+  FaChevronLeft,
+  FaChevronRight,
+} from "react-icons/fa";
 
 import { Donation } from "@/components/admin/donations/types";
 import DonationTable from "@/components/admin/donations/DonationTable";
@@ -58,11 +63,21 @@ export default function AdminDonationsPage() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
+      {/* ✅ Breadcrumb Navigation */}
+      <nav className="text-sm text-gray-500 mb-4 flex items-center">
+        <Link href="/admin/dashboard" className="hover:text-primary flex items-center">
+          <FaChevronLeft className="mr-1" /> Dashboard
+        </Link>
+        <FaChevronRight className="mx-2 text-gray-400" />
+        Donations
+      </nav>
+
+      {/* ✅ Page Title */}
       <h1 className="text-3xl font-bold mb-6 text-primary flex items-center gap-2">
         <FaChartBar /> Donations Dashboard
       </h1>
 
-      {/* === SUMMARY === */}
+      {/* ✅ Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <SummaryCard label="Total Donations" value={donations.length} />
         <SummaryCard
@@ -72,19 +87,16 @@ export default function AdminDonationsPage() {
           })}`}
         />
         <SummaryCard label="Currency" value="GBP" />
-        <SummaryCard
-          label="Export"
-          value={<ExportButtons data={donations} />}
-        />
+        <SummaryCard label="Export" value={<ExportButtons data={donations} />} />
       </div>
 
-      {/* === CHARTS === */}
+      {/* ✅ Insights Chart */}
       <DonationInsights />
 
-      {/* === MANUAL ENTRY FORM === */}
+      {/* ✅ Manual Form */}
       <ManualDonationForm onAdd={fetchDonations} />
 
-      {/* === TABLE === */}
+      {/* ✅ Table */}
       {loading ? (
         <p className="text-center text-gray-500">Loading donations...</p>
       ) : (
@@ -95,7 +107,7 @@ export default function AdminDonationsPage() {
         />
       )}
 
-      {/* === MODAL === */}
+      {/* ✅ Modal */}
       {selected && (
         <DonationDetailsModal
           donation={selected}
