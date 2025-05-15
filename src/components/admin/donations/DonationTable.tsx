@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { FaSearch, FaEye } from "react-icons/fa";
-import { Donation } from "./types"; // shared type
+import { Donation } from "./types";
 
 interface Props {
   donations: Donation[];
@@ -15,6 +15,7 @@ export default function DonationTable({ donations, onSelect }: Props) {
 
   const filtered = donations.filter((d) =>
     [d.customer_email, d.donorName, d.reference]
+      .filter(Boolean)
       .join(" ")
       .toLowerCase()
       .includes(search.toLowerCase())
@@ -53,13 +54,19 @@ export default function DonationTable({ donations, onSelect }: Props) {
             {filtered.map((d) => (
               <tr key={d.id} className="border-t hover:bg-gray-50">
                 <td className="p-3">{d.donorName || "Anonymous"}</td>
-                <td className="p-3">{d.customer_email}</td>
-                <td className="p-3">£{(d.amount_total / 100).toFixed(2)}</td>
-                <td className="p-3">{d.currency.toUpperCase()}</td>
-                <td className="p-3 capitalize">{d.status}</td>
-                <td className="p-3">{d.reference || "—"}</td>
+                <td className="p-3">{d.customer_email || "—"}</td>
                 <td className="p-3">
-                  {d.created?.toDate ? format(d.created.toDate(), "dd MMM yyyy") : "-"}
+                  {typeof d.amount_total === "number"
+                    ? `£${(d.amount_total / 100).toFixed(2)}`
+                    : "—"}
+                </td>
+                <td className="p-3">{d.currency?.toUpperCase() || "—"}</td>
+                <td className="p-3 capitalize">{d.status || "—"}</td>
+                <td className="p-3">{d.reference?.trim() || "—"}</td>
+                <td className="p-3">
+                  {d.created?.toDate
+                    ? format(d.created.toDate(), "dd MMM yyyy")
+                    : "—"}
                 </td>
                 <td className="p-3">
                   <button
@@ -75,7 +82,9 @@ export default function DonationTable({ donations, onSelect }: Props) {
         </table>
 
         {filtered.length === 0 && (
-          <div className="text-center p-6 text-gray-500 italic">No donations found.</div>
+          <div className="text-center p-6 text-gray-500 italic">
+            No donations found.
+          </div>
         )}
       </div>
     </div>

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { FaTimes, FaCopy } from "react-icons/fa";
-import { Donation } from "./types"; // ✅ Recommended: use shared type
+import { Donation } from "./types";
 
 interface Props {
   donation: Donation | null;
@@ -34,23 +34,29 @@ const DonationDetailsModal = ({ donation, onClose }: Props) => {
         </button>
 
         {/* Title */}
-        <h2 className="text-xl font-semibold text-primary mb-4">
-          Donation Details
-        </h2>
+        <h2 className="text-xl font-semibold text-primary mb-4">Donation Details</h2>
 
-        {/* Details */}
+        {/* Detail Fields */}
         <div className="space-y-3 text-sm">
           <DetailRow label="Donor Name" value={donation.donorName || "Anonymous"} />
-          <DetailRow label="Email" value={donation.customer_email} />
+          <DetailRow label="Email" value={donation.customer_email || "—"} />
           <DetailRow
             label="Amount"
-            value={`£${(donation.amount_total / 100).toFixed(2)} ${donation.currency?.toUpperCase()}`}
+            value={
+              typeof donation.amount_total === "number"
+                ? `£${(donation.amount_total / 100).toFixed(2)} ${donation.currency?.toUpperCase() || ""}`
+                : "—"
+            }
           />
-          <DetailRow label="Status" value={donation.status} />
+          <DetailRow label="Status" value={donation.status || "—"} />
           {donation.reference && <DetailRow label="Reference" value={donation.reference} />}
           <DetailRow
             label="Date"
-            value={donation.created?.toDate ? format(donation.created.toDate(), "dd MMM yyyy, p") : "-"}
+            value={
+              donation.created?.toDate
+                ? format(donation.created.toDate(), "dd MMM yyyy, p")
+                : "—"
+            }
           />
           {donation.sessionId && (
             <DetailRow
@@ -59,7 +65,7 @@ const DonationDetailsModal = ({ donation, onClose }: Props) => {
                 <div className="flex items-center gap-2 truncate max-w-[200px]">
                   <span className="truncate">{donation.sessionId}</span>
                   <button
-                    onClick={() => handleCopy(donation.sessionId || "")}
+                    onClick={() => handleCopy(donation.sessionId!)}
                     className="text-xs bg-gray-200 px-2 py-1 rounded hover:bg-gray-300"
                   >
                     <FaCopy />
@@ -69,9 +75,7 @@ const DonationDetailsModal = ({ donation, onClose }: Props) => {
               }
             />
           )}
-          {donation.source && (
-            <DetailRow label="Source" value={donation.source} />
-          )}
+          {donation.source && <DetailRow label="Source" value={donation.source} />}
         </div>
       </div>
     </div>
