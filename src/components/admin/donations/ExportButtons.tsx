@@ -25,6 +25,10 @@ export default function ExportButtons({ data }: Props) {
       Currency: d.currency?.toUpperCase() || "—",
       Status: d.status || "—",
       Reference: d.reference?.replace(/"/g, '""') || "—",
+      Frequency: d.frequency || "—",
+      ReceiptID: d.receipt_id || "—",
+      Message: d.message?.replace(/"/g, '""') || "—",
+      Source: d.source || "—",
       Date: d.created?.toDate
         ? format(d.created.toDate(), "dd MMM yyyy")
         : "—",
@@ -37,7 +41,9 @@ export default function ExportButtons({ data }: Props) {
       ...rows.map((row) =>
         headers
           .map((key) =>
-            `"${String(row[key as keyof typeof row]).replace(/"/g, '""')}"`
+            `"${String(row[key as keyof typeof row] ?? "")
+              .trim()
+              .replace(/"/g, '""')}"`
           )
           .join(",")
       ),

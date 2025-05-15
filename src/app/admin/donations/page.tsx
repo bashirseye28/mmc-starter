@@ -23,11 +23,19 @@ import DonationInsights from "@/components/admin/donations/DonationInsights";
 import ManualDonationForm from "@/components/admin/donations/ManualDonationForm";
 import ExportButtons from "@/components/admin/donations/ExportButtons";
 import DonationDetailsModal from "@/components/admin/donations/DonationDetailsModal";
+import DonationExportFilters from "@/components/admin/donations/DonationExportFilters"; // 👈 NEW
 
 export default function AdminDonationsPage() {
   const [donations, setDonations] = useState<Donation[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Donation | null>(null);
+
+  // 👇 Filter state
+  const [filters, setFilters] = useState({
+    reference: "",
+    status: "",
+    frequency: "",
+  });
 
   useEffect(() => {
     fetchDonations();
@@ -56,14 +64,23 @@ export default function AdminDonationsPage() {
     }
   };
 
-  const totalRaised = donations.reduce(
+  // 👇 Apply filters to donations
+  const filteredDonations = donations.filter((d) => {
+    return (
+      (!filters.reference || d.reference?.toLowerCase() === filters.reference.toLowerCase()) &&
+      (!filters.status || d.status === filters.status) &&
+      (!filters.frequency || d.frequency === filters.frequency)
+    );
+  });
+
+  const totalRaised = filteredDonations.reduce(
     (sum, d) => sum + (d.amount_total || 0),
     0
   );
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      {/* ✅ Breadcrumb Navigation */}
+      {/* Breadcrumb */}
       <nav className="text-sm text-gray-500 mb-4 flex items-center">
         <Link href="/admin/dashboard" className="hover:text-primary flex items-center">
           <FaChevronLeft className="mr-1" /> Dashboard
@@ -72,14 +89,19 @@ export default function AdminDonationsPage() {
         Donations
       </nav>
 
-      {/* ✅ Page Title */}
       <h1 className="text-3xl font-bold mb-6 text-primary flex items-center gap-2">
         <FaChartBar /> Donations Dashboard
       </h1>
 
-      {/* ✅ Summary Cards */}
+      {/* ✅ Filters + Export Row */}
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
+        <DonationExportFilters filters={filters} setFilters={setFilters} />
+        <ExportButtons data={filteredDonations} />
+      </div>
+
+      {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <SummaryCard label="Total Donations" value={donations.length} />
+        <SummaryCard label="Filtered Donations" value={filteredDonations.length} />
         <SummaryCard
           label="Amount Raised"
           value={`£${(totalRaised / 100).toLocaleString(undefined, {
@@ -87,27 +109,21 @@ export default function AdminDonationsPage() {
           })}`}
         />
         <SummaryCard label="Currency" value="GBP" />
-        <SummaryCard label="Export" value={<ExportButtons data={donations} />} />
       </div>
 
-      {/* ✅ Insights Chart */}
       <DonationInsights />
-
-      {/* ✅ Manual Form */}
       <ManualDonationForm onAdd={fetchDonations} />
 
-      {/* ✅ Table */}
       {loading ? (
         <p className="text-center text-gray-500">Loading donations...</p>
       ) : (
         <DonationTable
-          donations={donations}
+          donations={filteredDonations}
           onSelect={setSelected}
           onDelete={handleDelete}
         />
       )}
 
-      {/* ✅ Modal */}
       {selected && (
         <DonationDetailsModal
           donation={selected}
