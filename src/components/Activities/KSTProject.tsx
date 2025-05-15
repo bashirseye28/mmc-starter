@@ -6,8 +6,8 @@ import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMosque, faBullseye, faHandHoldingDollar } from "@fortawesome/free-solid-svg-icons";
 
-const goalAmount = 350000;
-const raisedAmount = 96000;
+const goalAmount = 150000;
+const raisedAmount = 97050;
 const progress = (raisedAmount / goalAmount) * 100;
 
 const KSTProject = () => {

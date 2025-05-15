@@ -38,7 +38,7 @@ const TopHeader = () => {
             <span className="bg-gold text-white px-2 py-1 rounded-md text-xs font-bold mr-2">
               INFO
             </span>
-            <span>Help Build KST – 96,000 Raised of 350,000 Goal</span>
+            <span>Help Build KST – £97,050 Raised of £150,000 Goal</span>
           </div>
         </div>
 

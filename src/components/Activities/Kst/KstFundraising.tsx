@@ -7,7 +7,7 @@ import Link from "next/link";
 
 // ✅ Fundraising Data (Replace with real API later)
 const targetAmount = 150000; // Total Fundraising Goal (£)
-const raisedAmount = 78500; // Amount Raised (£)
+const raisedAmount = 97050; // Amount Raised (£)
 const donors = 325; // Number of Supporters
 
 // ✅ Calculate Progress Percentage
