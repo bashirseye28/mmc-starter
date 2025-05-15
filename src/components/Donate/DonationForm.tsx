@@ -21,11 +21,9 @@ const DonationForm: React.FC<Props> = ({ onSubmit, onBack }) => {
     register,
     handleSubmit,
     watch,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<DonationFormValues>({
-    defaultValues: {
-      anonymous: false,
-    },
+    defaultValues: { anonymous: false },
   });
 
   const anonymous = watch("anonymous");
@@ -39,8 +37,9 @@ const DonationForm: React.FC<Props> = ({ onSubmit, onBack }) => {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Anonymous Toggle */}
-          <label className="flex items-center gap-3">
+          <label className="flex items-center gap-3" htmlFor="anonymous">
             <input
+              id="anonymous"
               type="checkbox"
               {...register("anonymous")}
               className="w-4 h-4 border rounded text-primary focus:ring-primary"
@@ -48,20 +47,23 @@ const DonationForm: React.FC<Props> = ({ onSubmit, onBack }) => {
             <span className="text-primary font-medium">I prefer to stay anonymous</span>
           </label>
 
-          {/* Name (if not anonymous) */}
+          {/* Full Name (if not anonymous) */}
           {!anonymous && (
             <div>
               <label htmlFor="name" className="block font-semibold text-primary mb-1">
-                Full Name
+                Full Name <span className="text-red-500">*</span>
               </label>
               <input
                 id="name"
                 {...register("name", { required: true })}
                 placeholder="e.g. Aisha Sarr"
                 className="w-full px-4 py-2 border rounded-md"
+                aria-invalid={!!errors.name}
               />
               {errors.name && (
-                <p className="text-red-600 text-sm mt-1">Name is required.</p>
+                <p className="text-red-600 text-sm mt-1" role="alert">
+                  Name is required.
+                </p>
               )}
             </div>
           )}
@@ -69,7 +71,7 @@ const DonationForm: React.FC<Props> = ({ onSubmit, onBack }) => {
           {/* Email */}
           <div>
             <label htmlFor="email" className="block font-semibold text-primary mb-1">
-              Email Address
+              Email Address <span className="text-red-500">*</span>
             </label>
             <input
               id="email"
@@ -77,9 +79,12 @@ const DonationForm: React.FC<Props> = ({ onSubmit, onBack }) => {
               {...register("email", { required: true })}
               placeholder="e.g. you@example.com"
               className="w-full px-4 py-2 border rounded-md"
+              aria-invalid={!!errors.email}
             />
             {errors.email && (
-              <p className="text-red-600 text-sm mt-1">Valid email is required.</p>
+              <p className="text-red-600 text-sm mt-1" role="alert">
+                Valid email is required.
+              </p>
             )}
           </div>
 
@@ -95,7 +100,9 @@ const DonationForm: React.FC<Props> = ({ onSubmit, onBack }) => {
               placeholder="e.g., For my late father"
               className="w-full px-4 py-2 border rounded-md"
             />
-            <p className="text-sm text-gray-500 mt-1">Can be used for dedications or notes.</p>
+            <p className="text-sm text-gray-500 mt-1">
+              Can be used for dedications or notes.
+            </p>
           </div>
 
           {/* Action Buttons */}
@@ -111,7 +118,12 @@ const DonationForm: React.FC<Props> = ({ onSubmit, onBack }) => {
 
             <button
               type="submit"
-              className="w-full sm:w-auto bg-gold text-black px-6 py-3 font-semibold rounded-lg flex items-center justify-center gap-2 hover:bg-yellow-500 transition"
+              disabled={isSubmitting}
+              className={`w-full sm:w-auto px-6 py-3 font-semibold rounded-lg flex items-center justify-center gap-2 transition ${
+                isSubmitting
+                  ? "bg-gray-400 text-white cursor-not-allowed"
+                  : "bg-gold text-black hover:bg-yellow-500"
+              }`}
             >
               Continue
               <FontAwesomeIcon icon={faArrowRight} />

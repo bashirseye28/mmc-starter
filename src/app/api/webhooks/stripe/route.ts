@@ -34,14 +34,17 @@ export async function POST(req: NextRequest) {
       await db.collection("donations").add({
         sessionId: session.id,
         donorName: metadata.donor_name || "Anonymous",
-        customer_email: metadata.donor_email || session.customer_email,
+        customer_email: metadata.donor_email || session.customer_email || "unknown",
         amount_total: session.amount_total ?? 0,
         currency: session.currency?.toUpperCase() || "GBP",
-        status: session.payment_status,
+        status: session.payment_status || "unpaid",
         reference: metadata.donation_reference || null,
         message: metadata.message || null,
+        receipt_id: metadata.receipt_id || null,
+        frequency: metadata.donation_frequency || "one-time",
         source: "stripe",
         created: Timestamp.now(),
+        metadata, // ✅ Save full metadata for admin UI
       });
 
       console.log("✅ Donation saved to Firestore with metadata");

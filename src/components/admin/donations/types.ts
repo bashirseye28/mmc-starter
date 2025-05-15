@@ -12,4 +12,15 @@ export interface Donation {
   sessionId?: string;   // Stripe session ID
   source?: string;      // "stripe", "manual", "cash", "bank", etc.
   created: any;         // Firestore Timestamp (cast with toDate())
+
+  metadata?: {
+    donor_name?: string;
+    donor_email?: string;
+    donation_reference?: string;
+    donation_amount?: string;
+    donation_frequency?: string;
+    donation_date?: string;
+    receipt_id?: string;
+    message?: string;
+  };
 }

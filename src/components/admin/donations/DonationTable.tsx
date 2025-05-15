@@ -17,8 +17,17 @@ export default function DonationTable({ donations, onSelect, onDelete }: Props) 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
+  const getDonorName = (d: Donation) =>
+    d.donorName || d.metadata?.donor_name || "Anonymous";
+
+  const getReference = (d: Donation) =>
+    d.reference || d.metadata?.donation_reference || "—";
+
+  const getEmail = (d: Donation) =>
+    d.customer_email || d.metadata?.donor_email || "—";
+
   const filtered = donations.filter((d) =>
-    [d.customer_email, d.donorName, d.reference]
+    [getEmail(d), getDonorName(d), getReference(d)]
       .filter(Boolean)
       .join(" ")
       .toLowerCase()
@@ -94,8 +103,8 @@ export default function DonationTable({ donations, onSelect, onDelete }: Props) 
           <tbody>
             {paginated.map((d) => (
               <tr key={d.id} className="border-t hover:bg-gray-50">
-                <td className="p-3">{d.donorName || "Anonymous"}</td>
-                <td className="p-3">{d.customer_email || "—"}</td>
+                <td className="p-3">{getDonorName(d)}</td>
+                <td className="p-3">{getEmail(d)}</td>
                 <td className="p-3">
                   {typeof d.amount_total === "number"
                     ? formatAmount(d.amount_total, d.currency)
@@ -107,7 +116,7 @@ export default function DonationTable({ donations, onSelect, onDelete }: Props) 
                     {d.status || "—"}
                   </span>
                 </td>
-                <td className="p-3">{d.reference?.trim() || "—"}</td>
+                <td className="p-3">{getReference(d)}</td>
                 <td className="p-3">
                   {d.created?.toDate
                     ? format(d.created.toDate(), "dd MMM yyyy")
@@ -117,14 +126,14 @@ export default function DonationTable({ donations, onSelect, onDelete }: Props) 
                   <button
                     onClick={() => onSelect(d)}
                     className="text-primary hover:underline flex items-center gap-1"
-                    aria-label={`View details of donation from ${d.donorName || "Anonymous"}`}
+                    aria-label={`View details of donation from ${getDonorName(d)}`}
                   >
                     <FaEye /> View
                   </button>
                   <button
                     onClick={() => onDelete(d.id)}
                     className="text-red-600 hover:underline flex items-center gap-1"
-                    aria-label={`Delete donation from ${d.donorName || "Anonymous"}`}
+                    aria-label={`Delete donation from ${getDonorName(d)}`}
                   >
                     <FaTrash /> Delete
                   </button>

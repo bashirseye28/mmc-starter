@@ -15,6 +15,26 @@ const DonationDetailsModal = ({ donation, onClose }: Props) => {
 
   if (!donation) return null;
 
+  const {
+    donorName,
+    customer_email,
+    amount_total,
+    currency,
+    status,
+    reference,
+    sessionId,
+    created,
+    source,
+    metadata = {},
+  } = donation;
+
+  const {
+    donor_name,
+    donor_email,
+    donation_reference,
+    message,
+  } = metadata;
+
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
     setCopied(true);
@@ -38,44 +58,58 @@ const DonationDetailsModal = ({ donation, onClose }: Props) => {
 
         {/* Detail Fields */}
         <div className="space-y-3 text-sm">
-          <DetailRow label="Donor Name" value={donation.donorName || "Anonymous"} />
-          <DetailRow label="Email" value={donation.customer_email || "—"} />
+          <DetailRow
+            label="Donor Name"
+            value={donorName || donor_name || "Anonymous"}
+          />
+          <DetailRow
+            label="Email"
+            value={customer_email || donor_email || "—"}
+          />
           <DetailRow
             label="Amount"
             value={
-              typeof donation.amount_total === "number"
-                ? `£${(donation.amount_total / 100).toFixed(2)} ${donation.currency?.toUpperCase() || ""}`
+              typeof amount_total === "number"
+                ? `£${(amount_total / 100).toFixed(2)} ${currency?.toUpperCase() || ""}`
                 : "—"
             }
           />
-          <DetailRow label="Status" value={donation.status || "—"} />
-          {donation.reference && <DetailRow label="Reference" value={donation.reference} />}
+          <DetailRow label="Status" value={status || "—"} />
+          <DetailRow
+            label="Reference"
+            value={reference || donation_reference || "—"}
+          />
+          {message && (
+            <DetailRow label="Message" value={message} />
+          )}
           <DetailRow
             label="Date"
             value={
-              donation.created?.toDate
-                ? format(donation.created.toDate(), "dd MMM yyyy, p")
+              created?.toDate
+                ? format(created.toDate(), "dd MMM yyyy, p")
                 : "—"
             }
           />
-          {donation.sessionId && (
+          {sessionId && (
             <DetailRow
               label="Session ID"
               value={
                 <div className="flex items-center gap-2 truncate max-w-[200px]">
-                  <span className="truncate">{donation.sessionId}</span>
+                  <span className="truncate">{sessionId}</span>
                   <button
-                    onClick={() => handleCopy(donation.sessionId!)}
+                    onClick={() => handleCopy(sessionId)}
                     className="text-xs bg-gray-200 px-2 py-1 rounded hover:bg-gray-300"
                   >
                     <FaCopy />
                   </button>
-                  {copied && <span className="text-green-600 text-xs">Copied!</span>}
+                  {copied && (
+                    <span className="text-green-600 text-xs">Copied!</span>
+                  )}
                 </div>
               }
             />
           )}
-          {donation.source && <DetailRow label="Source" value={donation.source} />}
+          {source && <DetailRow label="Source" value={source} />}
         </div>
       </div>
     </div>

@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
       isCustom,
     } = await req.json();
 
-    if (!amount || !frequency || !reference || !email) {
+    if (!amount || !frequency || !reference?.trim() || !email) {
       return NextResponse.json(
         { error: "Missing required donation fields." },
         { status: 400 }
@@ -40,10 +40,8 @@ export async function POST(req: NextRequest) {
       donor_email: email,
       donation_amount: amount.toString(),
       donation_frequency: frequency,
-      donation_reference: reference,
-      donation_date: new Date().toLocaleString("en-GB", {
-        timeZone: "Europe/London",
-      }),
+      donation_reference: reference.trim(),
+      donation_date: new Date().toISOString(),
       message: message || "",
     };
 
@@ -69,13 +67,14 @@ export async function POST(req: NextRequest) {
         mode: isRecurring ? "subscription" : "payment",
         payment_method_types: ["card"],
         customer_email: email,
+        metadata, // ✅ Ensure top-level metadata
         line_items: [
           {
             price: priceId,
             quantity: 1,
           },
         ],
-        subscription_data: isRecurring ? { metadata } : undefined, // ✅ Ensure correct wrapping
+        subscription_data: isRecurring ? { metadata } : undefined,
         payment_intent_data: !isRecurring ? { metadata } : undefined,
         success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${baseUrl}/donate/canceled?canceled=true`,
@@ -89,13 +88,14 @@ export async function POST(req: NextRequest) {
       mode: "payment",
       payment_method_types: ["card"],
       customer_email: email,
+      metadata, // ✅ Ensure top-level metadata
       line_items: [
         {
           price_data: {
             currency: "gbp",
             unit_amount: Math.round(amount * 100),
             product_data: {
-              name: reference,
+              name: reference.trim(),
               description: message || undefined,
             },
           },
@@ -142,7 +142,7 @@ export async function GET(req: NextRequest) {
       | null;
 
     const metadata = {
-      ...session.metadata, // just in case
+      ...session.metadata,
       ...subscription?.metadata,
       ...invoiceIntent?.metadata,
       ...paymentIntent?.metadata,

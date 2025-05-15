@@ -11,6 +11,7 @@ interface StripeCheckoutReviewProps {
   name: string;
   email: string;
   anonymous: boolean;
+  message?: string; // ✅ added message support
   isCustom: boolean;
   onReturn: () => void;
 }
@@ -22,6 +23,7 @@ const StripeCheckoutReview: React.FC<StripeCheckoutReviewProps> = ({
   name,
   email,
   anonymous,
+  message,
   isCustom,
   onReturn,
 }) => {
@@ -43,6 +45,8 @@ const StripeCheckoutReview: React.FC<StripeCheckoutReviewProps> = ({
           reference,
           name,
           email,
+          anonymous,
+          message: message || "",
           isCustom,
         }),
       });
@@ -90,6 +94,12 @@ const StripeCheckoutReview: React.FC<StripeCheckoutReviewProps> = ({
             <span className="font-semibold text-primary">Reference:</span>{" "}
             {reference}
           </p>
+          {message && (
+            <p>
+              <span className="font-semibold text-primary">Message:</span>{" "}
+              {message}
+            </p>
+          )}
         </div>
 
         {error && (
