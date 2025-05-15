@@ -5,7 +5,11 @@ import { db } from "@/app/lib/firebase";
 import { addDoc, collection, Timestamp } from "firebase/firestore";
 import { toast } from "react-toastify";
 
-const ManualDonationForm = () => {
+interface Props {
+  onAdd?: () => void; // ✅ Add this
+}
+
+const ManualDonationForm = ({ onAdd }: Props) => {
   const [form, setForm] = useState({
     donorName: "",
     customer_email: "",
@@ -17,16 +21,28 @@ const ManualDonationForm = () => {
     date: new Date(),
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value, type, checked } = e.target as HTMLInputElement;
+    setForm({ ...form, [name]: type === "checkbox" ? checked : value });
   };
 
   const handleSubmit = async () => {
-    const { donorName, customer_email, amount_total, currency, reference, status, source, date } =
-      form;
+    const {
+      donorName,
+      customer_email,
+      amount_total,
+      currency,
+      reference,
+      status,
+      source,
+      date,
+    } = form;
 
-    if (!customer_email || !amount_total) {
-      toast.error("Email and Amount are required");
+    const parsedAmount = parseFloat(amount_total);
+    if (!customer_email || isNaN(parsedAmount) || parsedAmount <= 0) {
+      toast.error("Please enter a valid email and donation amount.");
       return;
     }
 
@@ -34,7 +50,7 @@ const ManualDonationForm = () => {
       await addDoc(collection(db, "donations"), {
         donorName,
         customer_email,
-        amount_total: Math.round(Number(amount_total) * 100), // Convert to cents
+        amount_total: Math.round(parsedAmount * 100),
         currency,
         reference,
         status,
@@ -42,7 +58,8 @@ const ManualDonationForm = () => {
         created: Timestamp.fromDate(new Date(date)),
       });
 
-      toast.success("Manual donation added");
+      toast.success("Manual donation added successfully.");
+      if (onAdd) onAdd(); // ✅ Refresh parent
       setForm({
         donorName: "",
         customer_email: "",
@@ -54,8 +71,8 @@ const ManualDonationForm = () => {
         date: new Date(),
       });
     } catch (error) {
-      console.error(error);
-      toast.error("Failed to save donation");
+      console.error("Failed to save donation:", error);
+      toast.error("Something went wrong.");
     }
   };
 
@@ -84,14 +101,26 @@ const ManualDonationForm = () => {
           value={form.amount_total}
           onChange={handleChange}
           type="number"
+          min="0"
+          step="0.01"
           className="border p-2 rounded"
           required
         />
-        <select name="currency" value={form.currency} onChange={handleChange} className="border p-2 rounded">
+        <select
+          name="currency"
+          value={form.currency}
+          onChange={handleChange}
+          className="border p-2 rounded"
+        >
           <option value="GBP">GBP</option>
           <option value="USD">USD</option>
         </select>
-        <select name="source" value={form.source} onChange={handleChange} className="border p-2 rounded">
+        <select
+          name="source"
+          value={form.source}
+          onChange={handleChange}
+          className="border p-2 rounded"
+        >
           <option value="manual">Manual</option>
           <option value="bank">Bank</option>
           <option value="cash">Cash</option>

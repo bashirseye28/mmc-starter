@@ -28,19 +28,24 @@ export async function POST(req: NextRequest) {
     return new Response(`Webhook Error: ${err.message}`, { status: 400 });
   }
 
-  // ✅ Handle completed checkout session
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
+    const metadata = session.metadata || {};
 
     try {
       await db.collection('donations').add({
         sessionId: session.id,
-        name: session.metadata?.name || 'Anonymous',
-        email: session.metadata?.email || session.customer_email,
-        amount: (session.amount_total || 0) / 100,
-        currency: session.currency?.toUpperCase(),
-        status: session.payment_status,
+        donorName: metadata.donor_name || 'Anonymous',
+        customer_email: metadata.donor_email || session.customer_email || '',
+        amount_total: session.amount_total || 0,
+        currency: session.currency?.toUpperCase() || 'GBP',
+        status: session.payment_status || 'pending',
+        reference: metadata.donation_reference || '',
+        frequency: metadata.donation_frequency || 'one-time',
+        receipt_id: metadata.receipt_id || '',
+        message: metadata.message || '',
         created: Timestamp.now(),
+        source: 'stripe',
       });
 
       console.log('✅ Donation saved to Firestore');
